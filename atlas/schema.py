@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 
-SCHEMA_VERSION = "0.2"
+SCHEMA_VERSION = "0.3"
 
 # Controlled vocabulary: variable name → (unit, description). Names carry the unit.
 VARIABLES = {

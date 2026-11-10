@@ -1,12 +1,12 @@
 # Bioprocess Atlas
 
-**Real fermentation runs from published studies, changed one factor at a time and reduced to the same set of phenotypes, so that the effect of a gene, a temperature or a feed can be compared across labs, organisms and scales.**
+**Real fermentation and cell-culture runs from published studies, changed one factor at a time and reduced to the same set of phenotypes, so that the effect of a gene, a temperature, a feed or a medium can be compared across labs, organisms and scales.**
 
 **[Interactive explainer →](https://anupama29k.github.io/bioprocess-atlas/)** (architecture diagram you can drag around, one comparison followed through the pipeline, effects explorer). The source is `docs/index.html`.
 
 | release | datasets | bioreactor runs | organisms | one-factor comparisons | observations |
 |---|---|---|---|---|---|
-| v0.2 | 3 | 77 | 3 | 18 | 100,239 |
+| v0.3 | 5 | 122 | 4 (*E. coli*, two brewing yeasts, CHO) | 34 | 218,909 |
 
 ## Why
 
@@ -57,14 +57,18 @@ Phenotypes are taken only from phases in which both arms had the same conditions
 | `simensen2022` | *E. coli* MG1655, aerobic batch on glucose M9, 1 L, with off-gas | 1 | Simensen V et al. (2022) PLOS ONE 17:e0262450. [doi:10.1371/journal.pone.0262450](https://doi.org/10.1371/journal.pone.0262450) | CC BY 4.0 |
 | `hans2020` | 8 *E. coli* K-12 strains (Keio knockouts and parents) in 24 parallel fed-batch mini-bioreactors | 24 | Hans S et al. (2020) Bioengineering 7:145. [doi:10.3390/bioengineering7040145](https://doi.org/10.3390/bioengineering7040145) | CC BY 4.0 |
 | `uhlendorff2026` | Brewing yeast propagation: 2 strains × temperature, aeration, wort gravity, pre-culture, scale | 52 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.19690248](https://doi.org/10.5281/zenodo.19690248) | CC BY 4.0 |
+| `schellenberg2021` | CHO DG44 IgG producer, 12-day fed-batch: glutamate, glucose overfeeding, reduced feed, pH and CO2 stress vs standard process (ambr15 and shake flask) | 21 | Solle D, Schellenberg J (2021) LUH. [doi:10.25835/0066265](https://doi.org/10.25835/0066265); paper [doi:10.1002/elsc.202100062](https://doi.org/10.1002/elsc.202100062) | CC0 1.0 |
+| `uhlendorff2026_cho` | CHO-K1 batch and fed-batch with inline turbidity, permittivity, DO and CO2: agitation/aeration, seeding, glutamine, medium, impeller position, feeding | 24 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.20829178](https://doi.org/10.5281/zenodo.20829178) | CC BY 4.0 |
 
 Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 
-### Example findings in v0.2
+### Example findings
 
 - The *E. coli* ΔaceA strain reconsumes 5% of its acetate after glucose runs out, against 78% for the parent (p = 0.015, d = −5.6). This is the expected loss of the glyoxylate shunt.
 - The ale yeast W-68 reaches a 68% lower peak viable cell density at 37 °C than at 22 °C (p = 0.027), and its viability falls to 26% against 90%. The lager strain W-34/70 is unaffected (+1%).
 - A 3 h pre-culture lowers peak viable cell density by 37–41% in both strains, compared with a 24 h pre-culture.
+- In CHO DG44, glucose overfeeding raises cell-specific antibody productivity by 45% and titer by 20%, and CO2 limitation raises productivity by 21%, matching the original paper. The glutamate (low-glutamine) arms double productivity and enlarge the cells while peak density falls by three quarters.
+- In CHO-K1 (TCX6D medium), lowering the bottom impeller doubles peak viable cell density (+102%, p = 0.006).
 - All Keio knockouts show a similar −9 to −14% shift in peak acetate. A shift this uniform probably comes from the shared background or the plate rather than from the individual genes; treat it as a caveat.
 
 ## Quick start
@@ -72,7 +76,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 ```bash
 pip install -r requirements.txt
 python -m atlas.build          # rebuilds release/ from data/raw/
-python tests/test_atlas.py     # 13 checks, including known biology
+python tests/test_atlas.py     # 22 checks, including known biology
 ```
 
 ```python
@@ -91,7 +95,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). In short: unchanged files plus a README 
 
 | phase | goal | gate |
 |---|---|---|
-| 0 · Seed (now) | schema, build, tests, 3 measured datasets | engine reproduces published values |
+| 0 · Seed (now) | schema, build, tests, 5 measured datasets incl. CHO | engine reproduces published values |
 | 1 · Aggregate | 20–50 open datasets, 3+ organisms, field names mapped to the PREFER ontology | 200+ runs |
 | 2 · Generate | designed campaign on 24–48 parallel mini-bioreactors, with the parent strain in every plate column | batch effect smaller than the biological effects |
 | 3 · Scale and model | partner labs, graded process doses, a virtual bioreactor tested on held-out perturbations | |
@@ -103,6 +107,7 @@ atlas/        schema, ingesters, phenotype engine, build
 data/raw/     source files as published, one folder per dataset
 release/      built tables (committed so they can be used without building)
 docs/         interactive explainer (GitHub Pages)
+scripts/      make_demo_data.py: refresh the explainer's data from release/
 tests/        test_atlas.py
 ```
 
