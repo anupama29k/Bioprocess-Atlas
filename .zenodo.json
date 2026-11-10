@@ -1,0 +1,36 @@
+{
+  "title": "Bioprocess Atlas: comparable perturbation effects from published bioreactor runs",
+  "upload_type": "dataset",
+  "license": "cc-by-4.0",
+  "creators": [
+    {
+      "name": "Kozhiyalam, Anupama"
+    }
+  ],
+  "description": "<p>The Bioprocess Atlas collects real fermentation and cell-culture time courses from published studies, changed one factor at a time, and reduces them to the same set of phenotypes, so that the effect of a gene, a temperature, a feed or a medium can be compared across labs, organisms and scales.</p><p>Release v0.3 holds 7 measured datasets, 146 bioreactor runs, 6 organisms (<i>Escherichia coli</i>, <i>Bacillus subtilis</i>, <i>Saccharomyces cerevisiae</i>, <i>Saccharomyces pastorianus</i>, <i>Komagataella phaffii</i> and CHO), 220,453 observations and 45 one-factor comparisons.</p><p>Five tables are rebuilt from the unchanged published files with one command, and each release carries a manifest with the schema version, the analysis engine version and a checksum of every observation: runs, observations, phenotypes, effects (each perturbation against its own reference, with Welch t-test and effect size) and contrasts.</p><p>Each source dataset keeps the licence of its original publication (CC BY 4.0 or CC0) and is credited in <code>data/raw/&lt;dataset&gt;/README.md</code> and in <code>release/datasets.csv</code>; please cite the original studies alongside this release. The code in <code>atlas/</code> is MIT licensed.</p><p>An interactive explainer is published at https://anupama29k.github.io/Bioprocess-Atlas/</p>",
+  "keywords": [
+    "bioprocess",
+    "fermentation",
+    "bioreactor",
+    "perturbation atlas",
+    "open data",
+    "process development",
+    "fed-batch",
+    "CHO",
+    "Escherichia coli",
+    "Bacillus subtilis",
+    "Komagataella phaffii",
+    "Saccharomyces"
+  ],
+  "related_identifiers": [
+    {"identifier": "10.1371/journal.pone.0262450", "relation": "isDerivedFrom", "scheme": "doi", "resource_type": "publication-article"},
+    {"identifier": "10.3390/bioengineering7040145", "relation": "isDerivedFrom", "scheme": "doi", "resource_type": "publication-article"},
+    {"identifier": "10.5281/zenodo.19690248", "relation": "isDerivedFrom", "scheme": "doi", "resource_type": "dataset"},
+    {"identifier": "10.25835/0066265", "relation": "isDerivedFrom", "scheme": "doi", "resource_type": "dataset"},
+    {"identifier": "10.5281/zenodo.20829178", "relation": "isDerivedFrom", "scheme": "doi", "resource_type": "dataset"},
+    {"identifier": "10.34810/data1118", "relation": "isDerivedFrom", "scheme": "doi", "resource_type": "dataset"},
+    {"identifier": "10.1186/s12934-024-02531-w", "relation": "isDerivedFrom", "scheme": "doi", "resource_type": "publication-article"},
+    {"identifier": "https://github.com/anupama29k/bioprocessanalyzer", "relation": "isSupplementTo", "scheme": "url", "resource_type": "software"}
+  ],
+  "access_right": "open"
+}
