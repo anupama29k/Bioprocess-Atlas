@@ -6,7 +6,7 @@
 
 | release | datasets | bioreactor runs | organisms | one-factor comparisons | observations |
 |---|---|---|---|---|---|
-| v0.3 | 7 | 146 | 6 (*E. coli*, *B. subtilis*, two brewing yeasts, *K. phaffii*, CHO) | 44 | 220,453 |
+| v0.3 | 7 | 146 | 6 (*E. coli*, *B. subtilis*, two brewing yeasts, *K. phaffii*, CHO) | 45 | 220,453 |
 
 ## Why
 

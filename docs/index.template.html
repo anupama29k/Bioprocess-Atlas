@@ -281,7 +281,7 @@ NODES.forEach(n => {
     const pt = svg.createSVGPoint(); const m = svg.getScreenCTM().inverse();
     pt.x = ev.clientX; pt.y = ev.clientY; const p0 = pt.matrixTransform(m);
     const start = {...home[n.id]}; let moved = false;
-    g.setPointerCapture(ev.pointerId);
+    try { g.setPointerCapture(ev.pointerId); } catch (_) { /* synthetic event */ }
     const move = e2 => { pt.x = e2.clientX; pt.y = e2.clientY; const p = pt.matrixTransform(m);
       const dx = p.x - p0.x, dy = p.y - p0.y; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
       home[n.id] = {x: Math.max(0, Math.min(900 - W, start.x + dx)), y: Math.max(30, Math.min(470 - H, start.y + dy))}; place(); };
