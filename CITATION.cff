@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use the Bioprocess Atlas, please cite it and the original studies of each dataset you use."
+title: "Bioprocess Atlas"
+version: "0.2.0"
+date-released: "2026-11-10"
+license: MIT
+repository-code: "https://github.com/anupama29k/bioprocess-atlas"
+authors:
+  - family-names: "Anupama"
+    alias: "anupama29k"
+keywords: [bioprocess, fermentation, perturbation atlas, bioreactor, open data]
+references:
+  - type: article
+    title: "Experimental determination of Escherichia coli biomass composition for constraint-based metabolic modeling"
+    authors: [{family-names: Simensen, given-names: Vetle}]
+    journal: "PLOS ONE"
+    year: 2022
+    doi: "10.1371/journal.pone.0262450"
+  - type: article
+    title: "Automated Conditional Screening of Multiple Escherichia coli Strains in Parallel Adaptive Fed-Batch Cultivations"
+    authors: [{family-names: Hans, given-names: Sebastian}]
+    journal: "Bioengineering"
+    year: 2020
+    doi: "10.3390/bioengineering7040145"
+  - type: dataset
+    title: "Dataset Based on Inline Monitoring and Offline Analysis of Yeast Cultivations"
+    authors: [{family-names: Uhlendorff, given-names: S}]
+    year: 2026
+    doi: "10.5281/zenodo.19690248"

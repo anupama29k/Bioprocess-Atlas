@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bioprocess Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column; each section is a working instrument (diagram, stepper, heatmap) built from the release's real numbers. */
+:root {
+  --paper: #f4f6f5;
+  --panel: #ffffff;
+  --ink: #14212a;
+  --muted: #5b6b73;
+  --rule: #d9e0de;
+  --accent: #0b7a75;        /* reference / structure */
+  --accent-soft: #d6ece9;
+  --pert: #c4651b;          /* perturbation */
+  --pert-soft: #f6e3d2;
+  --good: #2f7d32; --bad: #b3362c;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1619; --panel: #162024; --ink: #e5ecec; --muted: #9aabb0; --rule: #2a383d;
+    --accent: #47b8ad; --accent-soft: #163a38; --pert: #e8924b; --pert-soft: #3d2816;
+    --good: #6cc070; --bad: #e87a6f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1619; --panel: #162024; --ink: #e5ecec; --muted: #9aabb0; --rule: #2a383d;
+  --accent: #47b8ad; --accent-soft: #163a38; --pert: #e8924b; --pert-soft: #3d2816;
+  --good: #6cc070; --bad: #e87a6f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.55 var(--body); }
+main { max-width: 1120px; margin: 0 auto; padding: 32px 20px 64px; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+h3 { font-size: 1.1rem; font-weight: 600; font-family: var(--body); }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+section { display: grid; gap: 18px; }
+.lead { font-size: 1.12rem; color: var(--ink); }
+.muted { color: var(--muted); }
+.kicker { font: 500 0.78rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+header { display: grid; gap: 18px; }
+.stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.stat { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; min-width: 120px; }
+.stat b { display: block; font: 600 1.45rem/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 0.82rem; color: var(--muted); }
+.purpose { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.purpose .panel { padding: 16px; display: grid; gap: 6px; }
+.purpose .tag { font: 500 0.75rem var(--mono); color: var(--muted); }
+
+/* diagram */
+.diagram-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; }
+@media (max-width: 860px) { .diagram-wrap { grid-template-columns: 1fr; } }
+.diagram { overflow-x: auto; padding: 8px; }
+.diagram svg { display: block; width: 100%; min-width: 720px; height: auto; touch-action: none; user-select: none; }
+.node rect { fill: var(--panel); stroke: var(--rule); stroke-width: 1.25; }
+.node.lane-src rect { stroke: var(--muted); }
+.node.lane-build rect { stroke: var(--accent); }
+.node.lane-rel rect { fill: var(--accent-soft); stroke: var(--accent); }
+.node.lane-use rect { stroke: var(--pert); }
+.node { cursor: grab; }
+.node:active { cursor: grabbing; }
+.node.sel rect { stroke-width: 2.5; }
+.node:focus-visible rect { stroke: var(--ink); stroke-width: 2.5; }
+.node:focus { outline: none; }
+.node text { fill: var(--ink); font: 600 12.5px var(--body); pointer-events: none; }
+.node text.sub { fill: var(--muted); font: 400 11px var(--mono); }
+.edge { fill: none; stroke: var(--muted); stroke-width: 1.25; opacity: 0.7; }
+.lane-label { fill: var(--muted); font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.pulse { fill: var(--pert); }
+.side { padding: 16px; display: grid; gap: 10px; align-content: start; }
+.side h3 { font-family: var(--display); font-size: 1.2rem; }
+.side ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.side .files { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 400 0.78rem var(--mono); background: var(--paper); border: 1px solid var(--rule); border-radius: 999px; padding: 2px 9px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, select { font: 500 0.9rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 7px; padding: 7px 12px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--accent); }
+button:focus-visible, select:focus-visible, .step:focus-visible, td.cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+
+/* stepper */
+.stepper { display: grid; gap: 14px; }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 640px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.step { text-align: left; padding: 10px 12px; border-radius: 8px; display: grid; gap: 2px; }
+.step b { font: 500 0.75rem var(--mono); color: var(--muted); }
+.step span { font-weight: 600; }
+.step[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }
+.stage { padding: 18px; display: grid; gap: 12px; }
+.stage .chart svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.verdict { display: flex; flex-wrap: wrap; gap: 10px; }
+.verdict .stat { min-width: 140px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 0.75rem var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.scroll { overflow-x: auto; }
+svg text { fill: var(--ink); font-family: var(--body); }
+svg .axis text { fill: var(--muted); font-size: 11px; }
+svg .grid line { stroke: var(--rule); }
+
+/* heatmap */
+.heat td.cell { text-align: center; cursor: pointer; font: 500 0.8rem var(--mono); min-width: 72px; border: 2px solid var(--panel); }
+.heat td.cell.sel { outline: 2px solid var(--ink); outline-offset: -2px; }
+.heat th.ph { writing-mode: horizontal-tb; max-width: 110px; font-size: 0.7rem; }
+.heat td.rowh { font-weight: 600; white-space: nowrap; }
+.scale { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.scale .bar { width: 160px; height: 10px; border-radius: 5px; }
+.detail { padding: 16px; display: grid; gap: 10px; }
+
+/* roadmap */
+.road { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 760px) { .road { grid-template-columns: 1fr 1fr; } }
+.road .panel { padding: 14px; display: grid; gap: 6px; }
+.road .panel.now { border-color: var(--accent); background: var(--accent-soft); }
+.road .gate { font: 400 0.78rem var(--mono); color: var(--muted); }
+pre { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; overflow-x: auto; font: 400 0.84rem/1.5 var(--mono); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+footer { color: var(--muted); font-size: 0.85rem; display: grid; gap: 6px; border-top: 1px solid var(--rule); padding-top: 18px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <span class="kicker">Open data · CC BY 4.0 · schema v<span id="ver"></span></span>
+  <h1>Bioprocess Atlas</h1>
+  <p class="lead">Measured fermentation runs from published studies, changed one thing at a time, turned into the same set of phenotypes, so the effect of a gene, a temperature or a feed can be compared across labs, organisms and scales.</p>
+  <div class="stats" id="stats"></div>
+</header>
+
+<section aria-labelledby="h-why">
+  <h2 id="h-why">What it is for</h2>
+  <p>Open upstream bioprocess data is scarce: the largest public benchmark is simulated, and real industrial sets usually keep only harvest-day values. The atlas collects real time courses and puts them in one shape.</p>
+  <div class="purpose">
+    <div class="panel"><span class="tag">compare</span><h3>Effects you can trust</h3><p class="muted">Every perturbation is measured against its own reference, ideally reactors run the same day, with replicate statistics on every number.</p></div>
+    <div class="panel"><span class="tag">reproduce</span><h3>Raw file to release in one command</h3><p class="muted">Each table is rebuilt from the unchanged published files. A checksum and the engine version are stamped on every release.</p></div>
+    <div class="panel"><span class="tag">model</span><h3>Training data for a virtual bioreactor</h3><p class="muted">Set points become doses (°C, vvm, °P, feed rate), the bioprocess version of graded genetic perturbations.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-how">
+  <h2 id="h-how">How it is built</h2>
+  <p>Drag the boxes to rearrange the pipeline; select one to see what it does and which files implement it. <span class="muted">Play the run to watch one cultivation travel from paper to release.</span></p>
+  <div class="toolbar">
+    <button class="primary" id="play">Play a run through the pipeline</button>
+    <button id="reset">Reset layout</button>
+  </div>
+  <div class="diagram-wrap">
+    <div class="diagram panel"><svg id="dia" viewBox="0 0 900 470" role="img" aria-label="Pipeline from published sources to release tables and uses"></svg></div>
+    <aside class="side panel" id="side" aria-live="polite"></aside>
+  </div>
+</section>
+
+<section aria-labelledby="h-follow">
+  <h2 id="h-follow">Follow one comparison</h2>
+  <p>Pick a real comparison and step through what the atlas does with it.</p>
+  <div class="toolbar"><label for="exsel" class="muted">Comparison</label><select id="exsel"></select></div>
+  <div class="stepper">
+    <div class="steps" role="tablist" id="steps"></div>
+    <div class="stage panel" id="stage"></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-explore">
+  <h2 id="h-explore">Explore the effects</h2>
+  <p>Each cell is one perturbation against its reference. Colour is the effect size (difference over pooled SD); the label is the % change. Select a cell to see the individual bioreactors.</p>
+  <div class="toolbar">
+    <label for="camp" class="muted">Campaign</label><select id="camp"></select>
+    <div class="scale"><span>lower</span><span class="bar" id="scalebar"></span><span>higher</span><span>· • p &lt; 0.05 · grey = n &lt; 2 per arm</span></div>
+  </div>
+  <div class="panel scroll"><table class="heat" id="heat"></table></div>
+  <div class="detail panel" id="detail"></div>
+</section>
+
+<section aria-labelledby="h-road">
+  <h2 id="h-road">Where it is going</h2>
+  <div class="road">
+    <div class="panel now"><span class="kicker">now</span><h3>0 · Seed</h3><p class="muted" id="road0"></p><span class="gate">gate: engine matches published values</span></div>
+    <div class="panel"><span class="kicker">next</span><h3>1 · Aggregate</h3><p class="muted">20–50 open datasets, batch and fed-batch, 3+ organisms, field names mapped to the PREFER ontology.</p><span class="gate">gate: 200+ runs, 3 organisms</span></div>
+    <div class="panel"><h3>2 · Generate</h3><p class="muted">A designed campaign on 24–48 parallel mini-bioreactors with automated sampling; the parent strain in every plate column.</p><span class="gate">gate: batch effect smaller than biology</span></div>
+    <div class="panel"><h3>3 · Scale and model</h3><p class="muted">Partner labs contribute; graded process doses; a virtual bioreactor trained and tested on held-out perturbations.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-use">
+  <h2 id="h-use">Use it</h2>
+  <div class="two">
+    <div style="display:grid;gap:8px"><h3>Load a release</h3>
+<pre>import pandas as pd
+eff = pd.read_csv("release/effects.csv")
+eff[eff.p_welch &lt; 0.05].sort_values("effect_size_d")</pre></div>
+    <div style="display:grid;gap:8px"><h3>Rebuild from raw files</h3>
+<pre>pip install -r requirements.txt
+python -m atlas.build        # → release/
+python tests/test_atlas.py   # 13 checks</pre></div>
+  </div>
+  <p>To add a dataset: put the unchanged files and a README (citation, license, conditions, caveats) in <code>data/raw/&lt;name&gt;/</code>, write one ingester function in <code>atlas/ingest.py</code>, and rebuild. The build refuses variables outside the vocabulary.</p>
+</section>
+
+<footer id="foot"></footer>
+</main>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+(() => {
+const D = JSON.parse(document.getElementById('data').textContent);
+const M = D.manifest;
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const fmt = (v, d = 2) => v == null || Number.isNaN(v) ? '–' : (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(d));
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* header */
+$('#ver').textContent = M.version;
+const stats = [[M.datasets, 'measured datasets'], [M.runs, 'bioreactor runs'], [M.organisms.length, 'organisms'], [new Set(D.effects.map(e => e.campaign + e.perturbation)).size, 'one-factor comparisons'], [M.observations.toLocaleString('en-US'), 'observations']];
+$('#stats').innerHTML = stats.map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+$('#road0').textContent = `${M.datasets} measured datasets, ${M.runs} runs, ${M.organisms.length} organisms; schema, build, tests, release.`;
+
+/* ---------- diagram ---------- */
+const NODES = [
+  {id:'papers', lane:'src', x:20,  y:70,  t:'Published studies', s:'papers · Zenodo', what:'Open-access papers and data deposits with real time courses: supplementary tables, Zenodo records. Each is checked for license (CC BY) before it enters.', files:['data/raw/*/README.md'], bullets:['Simensen 2022 · E. coli batch with off-gas','Hans 2020 · 8 E. coli strains × 3 reactors','Uhlendorff 2026 · 52 yeast propagations']},
+  {id:'raw', lane:'src', x:20,  y:250, t:'Raw files', s:'data/raw/<dataset>/', what:'The published values, unchanged except for reshaping and unit conversion, next to a README with citation, conditions and known caveats.', files:['data/raw/'], bullets:['conditions resolved from the data itself where tables are ambiguous','nothing silently dropped']},
+  {id:'ingest', lane:'build', x:230, y:40, t:'Ingesters', s:'atlas/ingest.py', what:'One function per dataset turns its files into runs, observations and explicit contrasts. Adding a dataset means adding one function.', files:['atlas/ingest.py'], bullets:['maps columns to the vocabulary','declares reference runs and one-factor contrasts']},
+  {id:'schema', lane:'build', x:230, y:160, t:'Schema + vocabulary', s:'atlas/schema.py', what:'Four tables keyed by run_id. A variable name fixes its unit (acetate_gL, DO_percent), so values compare across labs without unit columns.', files:['atlas/schema.py'], bullets:[`${M.variables} controlled variables`,'perturbation type, dose and reference on every run']},
+  {id:'engine', lane:'build', x:230, y:280, t:'Phenotype engine', s:'atlas/phenotypes.py', what:'Turns each run into phenotypes using the validated Bioprocess Analyzer growth engine, only from phases where runs share conditions.', files:['atlas/phenotypes.py','atlas/engine.py'], bullets:[`engine: ${M.engine}`,'feed-dependent phenotypes flagged as confounded']},
+  {id:'effects', lane:'build', x:230, y:390, t:'Effects', s:'Welch t · effect size', what:'Each perturbation against its reference: means, SDs, n, % change, effect size d and Welch p. Arms with one run report the difference only.', files:['atlas/phenotypes.py'], bullets:['same-day controls preferred','n = 1 arms never get a p-value']},
+  {id:'release', lane:'rel', x:460, y:150, t:'Release', s:'python -m atlas.build', what:'Versioned CSV tables plus a manifest with schema version, engine version and a checksum of every observation.', files:['release/runs.csv','release/observations.csv.gz','release/phenotypes.csv','release/effects.csv','release/contrasts.csv','release/manifest.json'], bullets:['rebuilt from raw files every time','tests/test_atlas.py checks known biology']},
+  {id:'analyzer', lane:'use', x:690, y:40, t:'Bioprocess Analyzer', s:'Atlas page', what:'The Streamlit app reads the latest release: effect heatmap, replicate time courses, dataset browser.', files:['github.com/anupama29k/bioprocessanalyzer'], bullets:['your own runs, analysed with the same engine']},
+  {id:'science', lane:'use', x:690, y:170, t:'Notebooks and papers', s:'pandas · R', what:'Plain CSV: load it, filter it, cite the release version.', files:['release/*.csv'], bullets:['cite the dataset DOIs and the release']},
+  {id:'model', lane:'use', x:690, y:300, t:'Virtual bioreactor', s:'phase 3', what:'Hybrid mechanistic and ML models trained across organisms and scales, tested on perturbations they never saw.', files:['planned'], bullets:['needs designed campaigns (phase 2)']},
+];
+const EDGES = [['papers','raw'],['raw','ingest'],['ingest','schema'],['schema','engine'],['engine','effects'],['schema','release'],['engine','release'],['effects','release'],['release','analyzer'],['release','science'],['release','model']];
+const W = 170, H = 54;
+const home = Object.fromEntries(NODES.map(n => [n.id, {x:n.x, y:n.y}]));
+const svg = $('#dia');
+let sel = 'release';
+const lanes = [['sources', 20], ['build', 230], ['release', 460], ['use', 690]];
+const gl = el('g', {}, svg); lanes.forEach(([t, x]) => { const tx = el('text', {x: x + 4, y: 22, class:'lane-label'}, gl); tx.textContent = t; });
+const defs = el('defs', {}, svg);
+const mk = el('marker', {id:'arr', viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse'}, defs);
+el('path', {d:'M0 0L10 5L0 10z', fill: 'currentColor'}, mk).style.color = 'var(--muted)';
+const ge = el('g', {}, svg), gn = el('g', {}, svg), gp = el('g', {}, svg);
+const pos = n => home[n];
+const edgePath = (a, b) => {
+  const A = pos(a), B = pos(b);
+  const ax = A.x + W, ay = A.y + H / 2, bx = B.x, by = B.y + H / 2;
+  if (bx > ax + 10) { const mx = (ax + bx) / 2; return `M${ax} ${ay}C${mx} ${ay} ${mx} ${by} ${bx} ${by}`; }
+  const ax2 = A.x + W / 2, ay2 = A.y + (B.y > A.y ? H : 0), bx2 = B.x + W / 2, by2 = B.y + (B.y > A.y ? 0 : H);
+  const my = (ay2 + by2) / 2; return `M${ax2} ${ay2}C${ax2} ${my} ${bx2} ${my} ${bx2} ${by2}`;
+};
+const edgeEls = EDGES.map(([a, b]) => ({a, b, p: el('path', {class:'edge', 'marker-end':'url(#arr)'}, ge)}));
+const drawEdges = () => edgeEls.forEach(e => e.p.setAttribute('d', edgePath(e.a, e.b)));
+const nodeEls = {};
+NODES.forEach(n => {
+  const g = el('g', {class:`node lane-${n.lane}`, tabindex:'0', role:'button', 'aria-label': n.t}, gn);
+  el('rect', {width:W, height:H, rx:8}, g);
+  const t1 = el('text', {x:12, y:23}, g); t1.textContent = n.t;
+  const t2 = el('text', {x:12, y:41, class:'sub'}, g); t2.textContent = n.s;
+  nodeEls[n.id] = g;
+  g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(n.id); } });
+  g.addEventListener('pointerdown', ev => {
+    const pt = svg.createSVGPoint(); const m = svg.getScreenCTM().inverse();
+    pt.x = ev.clientX; pt.y = ev.clientY; const p0 = pt.matrixTransform(m);
+    const start = {...home[n.id]}; let moved = false;
+    g.setPointerCapture(ev.pointerId);
+    const move = e2 => { pt.x = e2.clientX; pt.y = e2.clientY; const p = pt.matrixTransform(m);
+      const dx = p.x - p0.x, dy = p.y - p0.y; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+      home[n.id] = {x: Math.max(0, Math.min(900 - W, start.x + dx)), y: Math.max(30, Math.min(470 - H, start.y + dy))}; place(); };
+    const up = () => { g.removeEventListener('pointermove', move); g.removeEventListener('pointerup', up); if (!moved) select(n.id); };
+    g.addEventListener('pointermove', move); g.addEventListener('pointerup', up);
+  });
+});
+const place = () => { NODES.forEach(n => nodeEls[n.id].setAttribute('transform', `translate(${home[n.id].x},${home[n.id].y})`)); drawEdges(); };
+function select(id) {
+  sel = id; Object.entries(nodeEls).forEach(([k, g]) => g.classList.toggle('sel', k === id));
+  const n = NODES.find(x => x.id === id);
+  $('#side').innerHTML = `<span class="kicker">${n.lane === 'src' ? 'source' : n.lane === 'rel' ? 'release' : n.lane}</span><h3>${n.t}</h3><p>${n.what}</p><ul>${n.bullets.map(b => `<li>${b}</li>`).join('')}</ul><div class="files">${n.files.map(f => `<span class="chip">${f}</span>`).join('')}</div>`;
+}
+$('#reset').addEventListener('click', () => { NODES.forEach(n => home[n.id] = {x:n.x, y:n.y}); place(); });
+const ORDER = ['papers','raw','ingest','schema','engine','effects','release','analyzer'];
+let playing = false;
+$('#play').addEventListener('click', () => {
+  if (playing) return; playing = true;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dot = el('circle', {r:7, class:'pulse'}, gp);
+  let i = 0;
+  const hop = () => {
+    if (i >= ORDER.length - 1) { dot.remove(); playing = false; select('release'); return; }
+    const a = ORDER[i], b = ORDER[i + 1];
+    select(b);
+    const path = edgeEls.find(e => e.a === a && e.b === b);
+    const len = path ? path.p.getTotalLength() : 0; const t0 = performance.now(); const dur = reduce ? 1 : 700;
+    const step = now => { const k = Math.min(1, (now - t0) / dur);
+      if (path) { const p = path.p.getPointAtLength(len * k); dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); }
+      if (k < 1) requestAnimationFrame(step); else { i++; setTimeout(hop, reduce ? 0 : 900); } };
+    requestAnimationFrame(step);
+  };
+  hop();
+});
+place(); select('release');
+
+/* ---------- small charts ---------- */
+function lineChart(host, series, opts) {
+  const w = 760, h = 260, L = 52, R = 14, T = 14, B = 34;
+  const all = series.flatMap(s => s.pts);
+  const xmax = Math.max(...all.map(p => p[0])), ymax = Math.max(...all.map(p => p[1])) * 1.08 || 1;
+  const X = x => L + x / xmax * (w - L - R), Y = y => T + (1 - y / ymax) * (h - T - B);
+  const s = el('svg', {viewBox:`0 0 ${w} ${h}`, role:'img', 'aria-label': opts.label});
+  const g = el('g', {class:'grid'}, s), ax = el('g', {class:'axis'}, s);
+  const yt = niceTicks(ymax), xt = niceTicks(xmax);
+  yt.forEach(v => { el('line', {x1:L, x2:w - R, y1:Y(v), y2:Y(v)}, g); const t = el('text', {x:L - 6, y:Y(v) + 4, 'text-anchor':'end'}, ax); t.textContent = fmt(v, 1); });
+  xt.forEach(v => { const t = el('text', {x:X(v), y:h - 12, 'text-anchor':'middle'}, ax); t.textContent = v; });
+  const xl = el('text', {x:w - R, y:h - 12, 'text-anchor':'end'}, ax); xl.textContent = 'h';
+  if (opts.band) { el('rect', {x:X(opts.band[0]), y:T, width:Math.max(2, X(opts.band[1]) - X(opts.band[0])), height:h - T - B, fill:'var(--accent-soft)', opacity:0.6}, s);
+    const bt = el('text', {x:X(opts.band[0]) + 4, y:T + 14, 'font-size':'11px'}, s); bt.textContent = opts.bandLabel; bt.style.fill = 'var(--muted)'; }
+  series.forEach(sr => { const d = sr.pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[0])} ${Y(p[1])}`).join('');
+    el('path', {d, fill:'none', stroke:sr.color, 'stroke-width':1.8, opacity:0.9}, s);
+    sr.pts.forEach(p => { const c = el('circle', {cx:X(p[0]), cy:Y(p[1]), r:3, fill:sr.color}, s); const tt = el('title', {}, c); tt.textContent = `${sr.name} · ${fmt(p[0],1)} h · ${fmt(p[1],3)}`; }); });
+  host.replaceChildren(s);
+}
+function niceTicks(max) { const step = Math.pow(10, Math.floor(Math.log10(max))) * ([1, 2, 5].find(m => max / (Math.pow(10, Math.floor(Math.log10(max))) * m) <= 6) || 10); const out = []; for (let v = 0; v <= max + 1e-9; v += step) out.push(+v.toFixed(6)); return out; }
+function dotPlot(host, arms, unit, label) {
+  const w = 760, h = 150, L = 170, R = 60;
+  const vals = arms.flatMap(a => a.vals.filter(v => v != null));
+  const lo = Math.min(0, ...vals), hi = Math.max(...vals) * 1.1 || 1;
+  const X = v => L + (v - lo) / (hi - lo) * (w - L - R);
+  const s = el('svg', {viewBox:`0 0 ${w} ${h}`, role:'img', 'aria-label': label});
+  const g = el('g', {class:'grid'}, s), ax = el('g', {class:'axis'}, s);
+  niceTicks(hi).forEach(v => { el('line', {x1:X(v), x2:X(v), y1:16, y2:h - 30}, g); const t = el('text', {x:X(v), y:h - 12, 'text-anchor':'middle'}, ax); t.textContent = fmt(v, 2); });
+  const ul = el('text', {x:w - 4, y:h - 12, 'text-anchor':'end'}, ax); ul.textContent = unit;
+  arms.forEach((a, i) => { const y = 42 + i * 50; const t = el('text', {x:L - 12, y:y + 4, 'text-anchor':'end', 'font-weight':600, 'font-size':'13px'}, s); t.textContent = a.name;
+    const v = a.vals.filter(x => x != null); if (!v.length) return; const m = v.reduce((p, c) => p + c, 0) / v.length;
+    el('line', {x1:X(m), x2:X(m), y1:y - 14, y2:y + 14, stroke:a.color, 'stroke-width':3}, s);
+    v.forEach((x, j) => { const c = el('circle', {cx:X(x), cy:y + (j % 3 - 1) * 5, r:6, fill:a.color, 'fill-opacity':0.75}, s); const tt = el('title', {}, c); tt.textContent = `${a.name}: ${fmt(x,3)} ${unit}`; });
+    const mt = el('text', {x:X(m) + 10, y:y - 10, 'font-size':'12px'}, s); mt.textContent = `mean ${fmt(m, 3)}`; mt.style.fill = 'var(--muted)'; });
+  host.replaceChildren(s);
+}
+
+/* ---------- stepper ---------- */
+const STEPS = [['1', 'Measure'], ['2', 'Phenotype'], ['3', 'Compare'], ['4', 'Release']];
+let ex = D.examples[0], stepI = 0;
+$('#exsel').innerHTML = D.examples.map((e, i) => `<option value="${i}">${e.title}</option>`).join('');
+$('#exsel').addEventListener('change', e => { ex = D.examples[+e.target.value]; renderStep(); });
+$('#steps').innerHTML = STEPS.map(([b, s], i) => `<button class="step" role="tab" id="step${i}" aria-selected="${i === 0}"><b>step ${b}</b><span>${s}</span></button>`).join('');
+STEPS.forEach((_, i) => $('#step' + i).addEventListener('click', () => { stepI = i; renderStep(); }));
+const effFor = e => D.effects.find(r => r.phenotype === e.pheno && (e.id === 'aceA' ? r.perturbation === 'ΔaceA' : r.perturbation.startsWith('37') && r.campaign.includes('W-68')));
+function seriesOf(obj, color, tag) { return Object.entries(obj).map(([k, pts]) => ({name: `${tag} ${k}`, pts, color})); }
+function renderStep() {
+  STEPS.forEach((_, i) => $('#step' + i).setAttribute('aria-selected', i === stepI));
+  const st = $('#stage'), r = effFor(ex);
+  const pc = 'var(--pert)', rc = 'var(--accent)';
+  const pertName = ex.id === 'aceA' ? 'ΔaceA' : '37 °C', refName = ex.id === 'aceA' ? 'BW25113' : '22 °C';
+  const legend = `<div class="legend"><span><i style="background:${pc}"></i>${pertName} (perturbed)</span><span><i style="background:${rc}"></i>${refName} (reference)</span><span>one line per bioreactor</span></div>`;
+  if (stepI === 0) {
+    st.innerHTML = `<h3>${ex.varlabel} over time</h3><p class="muted">${ex.source}. The atlas stores every measurement as run · time · variable · value, with units fixed by the variable name (<code>${ex.var}</code>).</p>${legend}<div class="chart" id="c1"></div><div class="chart" id="c2"></div>`;
+    lineChart($('#c1'), [...seriesOf(ex.ref, rc, refName), ...seriesOf(ex.pert, pc, pertName)], {label: ex.varlabel});
+    lineChart($('#c2'), [...seriesOf(ex.ref2, rc, refName), ...seriesOf(ex.pert2, pc, pertName)], {label: ex.var2label});
+    const lab = document.createElement('p'); lab.className = 'muted'; lab.textContent = `Top: ${ex.varlabel}. Bottom: ${ex.var2label}.`; st.appendChild(lab);
+  } else if (stepI === 1) {
+    const rows = [...Object.entries(ex.phref).map(([k, v]) => [refName, k, v]), ...Object.entries(ex.phpert).map(([k, v]) => [pertName, k, v])];
+    const cols = Object.keys(rows[0][2]);
+    let band = null;
+    if (ex.id === 'aceA') { const dep = rows.map(r => r[2].glucose_depletion_h).filter(x => x != null); const t = dep.reduce((a, b) => a + b, 0) / dep.length; band = [t + 0.75, t + 2.5]; }
+    st.innerHTML = `<h3>Each run becomes a row of phenotypes</h3><p class="muted">${ex.phlabel} is read over ${ex.window}. Phenotypes come only from phases where both arms saw the same conditions.</p>${legend}<div class="chart" id="c1"></div><div class="scroll"><table><thead><tr><th>arm</th><th>run</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><td style="color:${r[0] === pertName ? pc : rc};font-weight:600">${r[0]}</td><td class="mono">${r[1]}</td>${cols.map(c => `<td>${fmt(r[2][c], 3)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    lineChart($('#c1'), [...seriesOf(ex.ref, rc, refName), ...seriesOf(ex.pert, pc, pertName)], {label: ex.varlabel, band, bandLabel: band ? 'reconsumption window' : ''});
+  } else if (stepI === 2) {
+    st.innerHTML = `<h3>${pertName} against ${refName}</h3><p class="muted">${ex.story}</p><div class="chart" id="c1"></div><div class="verdict">
+      <div class="stat"><b>${fmt(r.pct, 0)} %</b><span>change vs reference</span></div>
+      <div class="stat"><b>${fmt(r.d, 1)}</b><span>effect size d</span></div>
+      <div class="stat"><b>${r.p == null ? '–' : r.p < 0.001 ? '< 0.001' : r.p.toFixed(3)}</b><span>Welch p</span></div>
+      <div class="stat"><b>${r.n} vs ${r.rn}</b><span>bioreactors per arm</span></div></div>`;
+    dotPlot($('#c1'), [{name: refName, vals: r.b.map(x => x[1]), color: rc}, {name: pertName, vals: r.a.map(x => x[1]), color: pc}], ex.phunit, ex.phlabel);
+  } else {
+    const row = {campaign: r.campaign, perturbation: r.perturbation, phenotype: r.phenotype, unit: r.unit, mean: r.mean, ref_mean: r.ref, pct_change: r.pct, effect_size_d: r.d, p_welch: r.p, n: r.n, ref_n: r.rn};
+    st.innerHTML = `<h3>One row in <code>release/effects.csv</code></h3><p class="muted">Released with the manifest: schema v${M.version}, engine <code>${M.engine}</code>, observations checksum <code>${M.checksum}</code>. Anyone can rebuild it from the raw files and get the same row.</p><div class="scroll"><table><thead><tr>${Object.keys(row).map(k => `<th>${k}</th>`).join('')}</tr></thead><tbody><tr>${Object.values(row).map(v => `<td>${typeof v === 'number' ? fmt(v, 3) : v}</td>`).join('')}</tr></tbody></table></div><p class="muted">Source: <a href="https://doi.org/${ex.doi}">doi:${ex.doi}</a></p>`;
+  }
+}
+renderStep();
+
+/* ---------- heatmap ---------- */
+const camps = [...new Set(D.effects.map(e => e.campaign))];
+$('#camp').innerHTML = camps.map(c => `<option>${c}</option>`).join('');
+const PH = Object.keys(M.phenotypes).filter(p => !p.endsWith('_se_h'));
+const mix = (a, b, t) => `color-mix(in oklab, ${a} ${Math.round(t * 100)}%, ${b})`;
+const cellBg = d => d == null ? 'var(--paper)' : d < 0 ? mix('var(--accent)', 'var(--panel)', Math.min(1, Math.abs(d) / 5)) : mix('var(--pert)', 'var(--panel)', Math.min(1, d / 5));
+$('#scalebar').style.background = `linear-gradient(90deg, var(--accent), var(--panel), var(--pert))`;
+let selCell = null;
+function renderHeat() {
+  const c = $('#camp').value, rows = D.effects.filter(e => e.campaign === c);
+  const perts = [...new Set(rows.map(r => r.perturbation))], phs = PH.filter(p => rows.some(r => r.phenotype === p));
+  const head = `<thead><tr><th>perturbation</th>${phs.map(p => `<th class="ph" title="${M.phenotypes[p].description}">${p}</th>`).join('')}</tr></thead>`;
+  const body = perts.map(pt => `<tr><td class="rowh">${pt}</td>${phs.map(p => { const r = rows.find(x => x.perturbation === pt && x.phenotype === p);
+    if (!r) return '<td></td>';
+    const lab = (r.pct == null ? '–' : (r.pct > 0 ? '+' : '') + fmt(r.pct, 0) + '%') + (r.p != null && r.p < 0.05 ? ' •' : '');
+    const dark = r.d != null && Math.abs(r.d) > 3;
+    return `<td class="cell" tabindex="0" data-k="${pt}|${p}" style="background:${cellBg(r.d)};color:${dark ? 'var(--panel)' : 'var(--ink)'}" title="d = ${fmt(r.d,2)}, p = ${r.p == null ? '–' : fmt(r.p,3)}">${lab}</td>`; }).join('')}</tr>`).join('');
+  $('#heat').innerHTML = head + '<tbody>' + body + '</tbody>';
+  $('#heat').querySelectorAll('td.cell').forEach(td => { const go = () => showCell(c, td.dataset.k); td.addEventListener('click', go); td.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
+  const first = rows.slice().sort((a, b) => (a.p ?? 1) - (b.p ?? 1))[0];
+  showCell(c, `${first.perturbation}|${first.phenotype}`);
+}
+function showCell(c, k) {
+  const [pt, p] = k.split('|'); const r = D.effects.find(x => x.campaign === c && x.perturbation === pt && x.phenotype === p);
+  $('#heat').querySelectorAll('td.cell').forEach(td => td.classList.toggle('sel', td.dataset.k === k));
+  $('#detail').innerHTML = `<h3>${pt} · ${p}</h3><p class="muted">${M.phenotypes[p].description}. ${r.n} vs ${r.rn} bioreactors · ${r.pct == null ? '' : (r.pct > 0 ? '+' : '') + fmt(r.pct, 0) + '% · '}d = ${fmt(r.d, 2)} · p = ${r.p == null ? '– (needs 2 per arm)' : r.p < 0.001 ? '< 0.001' : r.p.toFixed(3)}</p><div class="chart" id="cd"></div>`;
+  dotPlot($('#cd'), [{name:'reference', vals:r.b.map(x => x[1]), color:'var(--accent)'}, {name:pt.length > 22 ? pt.slice(0, 21) + '…' : pt, vals:r.a.map(x => x[1]), color:'var(--pert)'}], r.unit, `${pt} ${p}`);
+}
+$('#camp').addEventListener('change', renderHeat);
+renderHeat();
+
+/* ---------- footer ---------- */
+$('#foot').innerHTML = `<b style="color:var(--ink)">Sources</b>` + D.datasets.map(d => `<span>${d.citation} — ${d.title}. <a href="https://doi.org/${d.doi}">doi:${d.doi}</a> · ${d.license}</span>`).join('') +
+  `<span>Engine: Bioprocess Analyzer (<a href="https://github.com/anupama29k/bioprocessanalyzer">github.com/anupama29k/bioprocessanalyzer</a>). Atlas data CC BY 4.0 with attribution to each source.</span>`;
+})();
+</script>
+</body>
+</html>
