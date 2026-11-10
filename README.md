@@ -6,7 +6,7 @@
 
 | release | datasets | bioreactor runs | organisms | one-factor comparisons | observations |
 |---|---|---|---|---|---|
-| v0.3 | 5 | 122 | 4 (*E. coli*, two brewing yeasts, CHO) | 34 | 218,909 |
+| v0.3 | 6 | 133 | 5 (*E. coli*, two brewing yeasts, *K. phaffii*, CHO) | 39 | 219,233 |
 
 ## Why
 
@@ -58,6 +58,7 @@ Phenotypes are taken only from phases in which both arms had the same conditions
 | `hans2020` | 8 *E. coli* K-12 strains (Keio knockouts and parents) in 24 parallel fed-batch mini-bioreactors | 24 | Hans S et al. (2020) Bioengineering 7:145. [doi:10.3390/bioengineering7040145](https://doi.org/10.3390/bioengineering7040145) | CC BY 4.0 |
 | `uhlendorff2026` | Brewing yeast propagation: 2 strains × temperature, aeration, wort gravity, pre-culture, scale | 52 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.19690248](https://doi.org/10.5281/zenodo.19690248) | CC BY 4.0 |
 | `schellenberg2021` | CHO DG44 IgG producer, 12-day fed-batch: glutamate, glucose overfeeding, reduced feed, pH and CO2 stress vs standard process (ambr15 and shake flask) | 21 | Solle D, Schellenberg J (2021) LUH. [doi:10.25835/0066265](https://doi.org/10.25835/0066265); paper [doi:10.1002/elsc.202100062](https://doi.org/10.1002/elsc.202100062) | CC0 1.0 |
+| `salesvallverdu2024` | *K. phaffii* (*Pichia*) glucose-limited fed-batch: hypoxia vs normoxia at four growth rates and for three secreted lipases | 11 | Sales-Vallverdú A et al. (2024) Microb Biotechnol 17:e14411; data [doi:10.34810/data1118](https://doi.org/10.34810/data1118) | CC BY 4.0 |
 | `uhlendorff2026_cho` | CHO-K1 batch and fed-batch with inline turbidity, permittivity, DO and CO2: agitation/aeration, seeding, glutamine, medium, impeller position, feeding | 24 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.20829178](https://doi.org/10.5281/zenodo.20829178) | CC BY 4.0 |
 
 Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
@@ -69,6 +70,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 - A 3 h pre-culture lowers peak viable cell density by 37–41% in both strains, compared with a 24 h pre-culture.
 - In CHO DG44, glucose overfeeding raises cell-specific antibody productivity by 45% and titer by 20%, and CO2 limitation raises productivity by 21%, matching the original paper. The glutamate (low-glutamine) arms double productivity and enlarge the cells while peak density falls by three quarters.
 - In CHO-K1 (TCX6D medium), lowering the bottom impeller doubles peak viable cell density (+102%, p = 0.006).
+- In *K. phaffii*, oxygen-limited (hypoxic) fed-batch raises final lipase activity by 75–153% against matched normoxic runs, for all three products and at every growth rate tested, as the original study reports.
 - All Keio knockouts show a similar −9 to −14% shift in peak acetate. A shift this uniform probably comes from the shared background or the plate rather than from the individual genes; treat it as a caveat.
 
 ## Quick start
@@ -76,7 +78,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 ```bash
 pip install -r requirements.txt
 python -m atlas.build          # rebuilds release/ from data/raw/
-python tests/test_atlas.py     # 22 checks, including known biology
+python tests/test_atlas.py     # 25 checks, including known biology
 ```
 
 ```python
@@ -95,7 +97,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). In short: unchanged files plus a README 
 
 | phase | goal | gate |
 |---|---|---|
-| 0 · Seed (now) | schema, build, tests, 5 measured datasets incl. CHO | engine reproduces published values |
+| 0 · Seed (now) | schema, build, tests, 6 measured datasets incl. CHO and *Pichia* | engine reproduces published values |
 | 1 · Aggregate | 20–50 open datasets, 3+ organisms, field names mapped to the PREFER ontology | 200+ runs |
 | 2 · Generate | designed campaign on 24–48 parallel mini-bioreactors, with the parent strain in every plate column | batch effect smaller than the biological effects |
 | 3 · Scale and model | partner labs, graded process doses, a virtual bioreactor tested on held-out perturbations | |

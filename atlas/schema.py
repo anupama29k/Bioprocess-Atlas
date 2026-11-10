@@ -49,6 +49,8 @@ VARIABLES = {
     "ammonium_mmolL":  ("mmol/L", "ammonium in broth"),
     "osmolality_mOsm_kg": ("mOsm/kg", "osmolality"),
     "cell_diameter_um": ("µm", "mean diameter of viable cells"),
+    "arabitol_gL":     ("g/L", "arabitol in broth"),
+    "product_activity_AU_mL": ("AU/mL", "target enzyme activity in broth (assay-specific units; compare within a product only)"),
 }
 
 PERTURBATION_TYPES = ("none", "gene_knockout", "strain", "medium", "feed",

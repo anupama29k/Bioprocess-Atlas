@@ -34,6 +34,9 @@ PHENOTYPES = {
     "ivcd_1e9_cells_h_L":    ("10⁹ cells·h/L", "integral of viable cell density over the run (trapezoid)", False),
     "titer_final_gL":        ("g/L", "product titer at the last sample", False),
     "qp_pg_cell_day":        ("pg/cell/day", "cell-specific productivity: product made ÷ integral of viable cells", False),
+    "activity_final_AU_mL":  ("AU/mL", "product activity at the last sample (assay-specific; compare within a product)", False),
+    "ethanol_end_gL":        ("g/L", "ethanol at the last sample", False),
+    "arabitol_end_gL":       ("g/L", "arabitol at the last sample", False),
     "viability_80_h":        ("h", "first sample after peak VCD with viability below 80 % (culture decline)", False),
     "diameter_end_um":       ("µm", "mean viable cell diameter at the last sample", False),
     "mu_fedbatch_h":         ("h⁻¹", "mean growth rate after glucose depletion (fed-batch); depends on the feed", True),
@@ -79,6 +82,11 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
     tdm, dm = _series(obs, "cell_diameter_um")
     if len(tdm):
         out["diameter_end_um"] = float(dm[-1])
+    for var, key in (("product_activity_AU_mL", "activity_final_AU_mL"), ("ethanol_gL", "ethanol_end_gL"),
+                     ("arabitol_gL", "arabitol_end_gL")):
+        tt, vv = _series(obs, var)
+        if len(tt):
+            out[key] = float(vv[-1])
     tp, prod = _series(obs, "product_gL")
     if len(tp):
         out["titer_final_gL"] = float(prod[-1])

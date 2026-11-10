@@ -291,3 +291,76 @@ def uhlendorff2026_cho() -> Dataset:
 
 
 INGESTERS["uhlendorff2026_cho"] = uhlendorff2026_cho
+
+
+def salesvallverdu2024() -> Dataset:
+    """K. phaffii P_GAP producers in glucose-limited fed-batch: hypoxia (RQ-controlled) vs normoxia."""
+    D = ROOT / "salesvallverdu2024_pichia_hypoxia"
+    L = [l.split("\t") for l in (D / "raw_data_microbial_biotech_v1.tab").read_text().split("\n")]
+    ds = Dataset(
+        dataset_id="salesvallverdu2024",
+        title="Komagataella phaffii fed-batch: hypoxia vs normoxia at four growth rates (Crl1) and for two other proteins",
+        citation="Sales-Vallverdú A et al. (2024) Microbial Biotechnology 17:e14411; data on CORA",
+        doi="10.34810/data1118", license="CC BY 4.0", measured=True)
+    # block start row → (product, set µ in h⁻¹)
+    blocks = {0: ("Crl1", 0.030), 11: ("Crl1", 0.065), 21: ("Crl1", 0.100), 30: ("Crl1", 0.120),
+              39: ("proROL", None), 48: ("CalB", None)}
+    starts = sorted(blocks)
+    cols = {3: ("biomass_gL", 1), 4: ("product_activity_AU_mL", 1), 5: ("ethanol_gL", 1),
+            6: ("arabitol_gL", 1), 8: ("glucose_gL", 1)}
+    # Known problems in the source table (see README): one run is misaligned, one column is a copy.
+    unusable = {("Crl1", 0.065, "normoxia")}
+    drop_cols = {("Crl1", 0.030, "normoxia"): {5}}
+
+    def num(x):
+        try:
+            return float(x.strip().strip('"'))
+        except ValueError:
+            return None
+
+    rid_of = {}
+    for s in starts:
+        e = next((x for x in starts if x > s), len(L))
+        product, mu = blocks[s]
+        for off in (0, 11):
+            label = L[s][off].strip('"').lower()
+            o2 = "hypoxia" if "hypoxia" in label else "normoxia"
+            if (product, mu, o2) in unusable:
+                continue
+            tag = f"{product}_{'mu' + format(mu, '.3f') if mu else 'mu-default'}_{o2}"
+            rid = f"salesvallverdu2024:{tag}"
+            rid_of[(product, mu, o2)] = rid
+            ds.runs.append(Run(
+                run_id=rid, dataset_id=ds.dataset_id, organism="Komagataella phaffii", strain=f"P_GAP-{product} producer",
+                mode="Fed-batch", vessel="stirred-tank bioreactor (bench)", working_volume_L=None,
+                medium="defined medium, glucose-limited fed-batch", temperature_C=None, pH_setpoint=None, replicate=1,
+                campaign="salesvallverdu2024", reference_condition=tag, condition=tag, perturbation_type="none",
+                is_reference=True, source_doi=ds.doi, license=ds.license,
+                notes=(f"set growth rate {mu} h⁻¹; " if mu else "") + f"{o2}; time = hours of fed-batch phase"
+                      + ("; ethanol column dropped (copy of the hypoxia run)" if (product, mu, o2) in drop_cols else "")))
+            for r in L[s + 2:e]:
+                if len(r) < off + 9:
+                    continue
+                v = [num(x) for x in r[off:off + 9]]
+                if v[0] is None or v[0] == 0:          # sample 0 is an all-zero placeholder row
+                    continue
+                t = v[2]
+                if t is None:
+                    continue
+                for j, (var, k) in cols.items():
+                    if j in drop_cols.get((product, mu, o2), ()) or v[j] is None:
+                        continue
+                    ds.observations.append((rid, float(t), var, v[j] * k))
+
+    for product, mu in [("Crl1", 0.030), ("Crl1", 0.100), ("Crl1", 0.120), ("proROL", None), ("CalB", None)]:
+        a, b = rid_of.get((product, mu, "hypoxia")), rid_of.get((product, mu, "normoxia"))
+        if a and b:
+            ds.contrasts.append(dict(
+                campaign="K. phaffii · hypoxia", perturbation_type="DO",
+                perturbation=f"hypoxia vs normoxia ({product}" + (f", µ = {mu:g} h⁻¹)" if mu else ")"),
+                dose=mu, runs=[a], reference_runs=[b],
+                exclude_phenotypes=["glucose_depletion_h", "mu_batch_h", "Yxs_batch_gg"]))
+    return ds
+
+
+INGESTERS["salesvallverdu2024"] = salesvallverdu2024

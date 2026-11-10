@@ -72,6 +72,15 @@ with tempfile.TemporaryDirectory() as d:
     check("CHO qP is in the usual range for an IgG producer (5–60 pg/cell/day)",
           ph.qp_pg_cell_day.dropna().between(5, 60).all(), f"{ph.qp_pg_cell_day.min():.0f}–{ph.qp_pg_cell_day.max():.0f}")
     check("single-vessel references get no p-value", c.p_welch.isna().all())
+    ph_ = eff[eff.campaign == "K. phaffii · hypoxia"]
+    act = ph_[ph_.phenotype == "activity_final_AU_mL"]
+    check("K. phaffii: hypoxia raises product activity for every product and growth rate (paper's finding)",
+          len(act) == 5 and (act["pct_change"] > 50).all(),
+          ", ".join(f"{v:+.0f} %" for v in act["pct_change"]))
+    check("K. phaffii: growth-phase phenotypes are not compared in fed-batch-only runs",
+          not ph_.phenotype.isin(["mu_batch_h", "glucose_depletion_h", "Yxs_batch_gg"]).any())
+    check("the misaligned Pichia run (µ = 0.065 normoxia) is not in the atlas",
+          not runs.run_id.str.contains("mu0.065_normoxia").any())
     check("feed-dependent phenotypes are flagged",
           eff[eff.phenotype == "mu_fedbatch_h"].confounded_by_feed.all())
 
