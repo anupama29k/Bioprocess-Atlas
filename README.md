@@ -2,7 +2,7 @@
 
 **Real fermentation and cell-culture runs from published studies, changed one factor at a time and reduced to the same set of phenotypes, so that the effect of a gene, a temperature, a feed or a medium can be compared across labs, organisms and scales.**
 
-**[Interactive explainer →](https://anupama29k.github.io/bioprocess-atlas/)** (architecture diagram you can drag around, one comparison followed through the pipeline, effects explorer). The source is `docs/index.html`.
+**[Interactive explainer →](https://anupama29k.github.io/Bioprocess-Atlas/)** (architecture diagram you can drag around, one comparison followed through the pipeline, effects explorer). The source is `docs/index.html`.
 
 | release | datasets | bioreactor runs | organisms | one-factor comparisons | observations |
 |---|---|---|---|---|---|
