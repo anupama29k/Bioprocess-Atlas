@@ -364,3 +364,90 @@ def salesvallverdu2024() -> Dataset:
 
 
 INGESTERS["salesvallverdu2024"] = salesvallverdu2024
+
+
+def hiller2024() -> Dataset:
+    """B. subtilis surfactin: six growth-rate-controlling feed rates in 30 L fed-batch, plus a batch process."""
+    import openpyxl
+
+    D = ROOT / "hiller2024_bsubtilis_surfactin"
+    wb = openpyxl.load_workbook(D / "12934_2024_2531_MOESM2_ESM.xlsx", data_only=True)
+    ds = Dataset(
+        dataset_id="hiller2024",
+        title="B. subtilis BMV9 surfactin: six growth-rate-controlling feed rates (0.075–0.4 h⁻¹) in 30 L fed-batch, duplicate bioreactors",
+        citation="Hiller E, Off M, Hermann A, Vahidinasab M, Benatto Perino EH, Lilge L, Hausmann R (2024) Microbial Cell Factories 23:260",
+        doi="10.1186/s12934-024-02531-w", license="CC BY 4.0", measured=True)
+    cols = {"OD600": ("od600", 1), "CDW (g/L)": ("biomass_gL", 1), "Glucose (g/L)": ("glucose_gL", 1),
+            "Surfactin (g/L)": ("product_gL", 1), "Acetate (g/L)": ("acetate_gL", 1),
+            "Ammonium (g/L)": ("ammonium_gL", 1)}
+    REF_MU = 0.075
+    rid_of = {}
+
+    def add_run(rid, mu, rep, feed_start):
+        is_ref = (mu == REF_MU)
+        cond = "batch (no feed)" if mu is None else f"feed for µ = {mu:g} h⁻¹"
+        ds.runs.append(Run(
+            run_id=rid, dataset_id=ds.dataset_id, organism="Bacillus subtilis",
+            strain="BMV9 (spo0A3 trp+ sfp+ ΔmanPA), surfactin producer", mode="Batch" if mu is None else "Fed-batch",
+            vessel="30 L stirred-tank bioreactor, 3 Rushton turbines", working_volume_L=12.0,
+            medium="chemically defined mineral salt medium, glucose", temperature_C=37.0, pH_setpoint=7.0,
+            replicate=rep, campaign="hiller2024",
+            # comparisons for this dataset are the explicit one-factor contrasts below
+            reference_condition=cond, condition=cond, perturbation_type="none" if is_ref else ("feed" if mu else "none"),
+            perturbation="" if is_ref else cond, perturbation_dose=mu, is_reference=is_ref,
+            source_doi=ds.doi, license=ds.license,
+            notes="batch volume 12 L in a 30 L vessel, final volume ≈ 18.7 L; DO held above 50 %"
+                  + (f"; feed started at {feed_start:g} h" if feed_start is not None else "")))
+
+    for ws in wb.worksheets:
+        mu = None if ws.title == "Batch" else float(ws.title.split()[0])
+        rows = list(ws.iter_rows(values_only=True))
+        h_i = next(i for i, r in enumerate(rows) if r and "Time (h)" in [str(c) for c in r])
+        header = rows[h_i]
+        # the sheets end with a volume-balance table whose numbers must not be read as samples
+        end = next((i for i in range(h_i + 1, len(rows))
+                    if any("volume" in str(c).lower() for c in rows[i] if c is not None)), len(rows))
+        rows = rows[h_i + 1:end]
+        # one block per bioreactor; a block starts at each "Time (h)" column
+        blocks = [i for i, c in enumerate(header) if str(c) == "Time (h)"]
+        for rep, t_col in enumerate(blocks, start=1):
+            colmap = {}
+            for j in range(t_col, min(t_col + 8, len(header))):
+                name = str(header[j])
+                if name in cols:
+                    colmap[j] = cols[name]
+            rid = f"hiller2024:{'batch' if mu is None else 'mu' + format(mu, '.3f')}_R{rep}"
+            obs, feed_start = [], None
+            for r in rows:
+                if len(r) <= t_col or not isinstance(r[t_col], (int, float)):
+                    continue
+                t = float(r[t_col])
+                if str(r[t_col - 1]).upper().startswith("FS"):
+                    feed_start = t
+                for j, (var, k) in colmap.items():
+                    v = r[j] if j < len(r) else None
+                    if isinstance(v, (int, float)):
+                        obs.append((rid, t, var, float(v) * k))
+            if not obs:
+                continue
+            add_run(rid, mu, rep, feed_start)
+            ds.observations += obs
+            rid_of.setdefault(mu, []).append(rid)
+
+    for mu in sorted(m for m in rid_of if m not in (None, REF_MU)):
+        ds.contrasts.append(dict(
+            campaign="B. subtilis · surfactin feed rate", perturbation_type="feed",
+            perturbation=f"feed for µ = {mu:g} vs {REF_MU:g} h⁻¹", dose=mu,
+            runs=rid_of[mu], reference_runs=rid_of[REF_MU],
+            # the feed starts at glucose depletion, so the reconsumption window lies inside the feed phase
+            exclude_phenotypes=["acetate_reconsumed_frac"]))
+    if None in rid_of:
+        ds.contrasts.append(dict(
+            campaign="B. subtilis · surfactin feed rate", perturbation_type="feed",
+            perturbation=f"fed-batch (µ = {REF_MU:g}) vs batch", dose=None,
+            runs=rid_of[REF_MU], reference_runs=rid_of[None],
+            exclude_phenotypes=["acetate_reconsumed_frac"]))
+    return ds
+
+
+INGESTERS["hiller2024"] = hiller2024

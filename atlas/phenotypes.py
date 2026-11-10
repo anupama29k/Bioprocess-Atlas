@@ -34,6 +34,9 @@ PHENOTYPES = {
     "ivcd_1e9_cells_h_L":    ("10⁹ cells·h/L", "integral of viable cell density over the run (trapezoid)", False),
     "titer_final_gL":        ("g/L", "product titer at the last sample", False),
     "qp_pg_cell_day":        ("pg/cell/day", "cell-specific productivity: product made ÷ integral of viable cells", False),
+    "acetate_end_gL":        ("g/L", "acetate at the last sample (late overflow, unlike the batch-phase peak)", False),
+    "glucose_end_gL":        ("g/L", "glucose at the last sample (high = fed faster than consumed)", True),
+    "product_per_biomass_gg": ("g/g", "product titer ÷ biomass at the last sample", False),
     "activity_final_AU_mL":  ("AU/mL", "product activity at the last sample (assay-specific; compare within a product)", False),
     "ethanol_end_gL":        ("g/L", "ethanol at the last sample", False),
     "arabitol_end_gL":       ("g/L", "arabitol at the last sample", False),
@@ -76,6 +79,8 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
         late = tvi[(tvi >= t_pk) & (vi < 80)]
         if len(late):
             out["viability_80_h"] = float(late[0])
+    if len(ta):
+        out["acetate_end_gL"] = float(a[-1])
     tl, lac = _series(obs, "lactate_gL")
     if len(tl):
         out["lactate_peak_gL"] = float(lac.max())
@@ -87,9 +92,14 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
         tt, vv = _series(obs, var)
         if len(tt):
             out[key] = float(vv[-1])
+    if len(tg):
+        out["glucose_end_gL"] = float(g[-1])
     tp, prod = _series(obs, "product_gL")
     if len(tp):
         out["titer_final_gL"] = float(prod[-1])
+        tb, bm = _series(obs, "biomass_gL")
+        if len(tb) and bm[-1] > 0:
+            out["product_per_biomass_gg"] = float(prod[-1] / bm[-1])
     if len(tv) >= 3:
         ivcd = np.trapezoid(v, tv) if hasattr(np, "trapezoid") else np.trapz(v, tv)   # cells·h/mL
         out["ivcd_1e9_cells_h_L"] = float(ivcd * 1e3 / 1e9)
@@ -200,7 +210,7 @@ def effects(runs: pd.DataFrame, pheno: pd.DataFrame, contrasts=None) -> pd.DataF
             if len(a) == 0 or len(b) == 0:
                 continue
             rows.append({**base, "phenotype": p, "unit": PHENOTYPES[p][0], **_compare(a, b),
-                         "confounded_by_feed": PHENOTYPES[p][2]})
+                         "confounded_by_feed": PHENOTYPES[p][2] and base["perturbation_type"] != "feed"})
 
     for (camp, cond), g in df.groupby(["campaign", "condition"]):
         refc = g.reference_condition.iloc[0]

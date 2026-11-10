@@ -81,7 +81,21 @@ with tempfile.TemporaryDirectory() as d:
           not ph_.phenotype.isin(["mu_batch_h", "glucose_depletion_h", "Yxs_batch_gg"]).any())
     check("the misaligned Pichia run (µ = 0.065 normoxia) is not in the atlas",
           not runs.run_id.str.contains("mu0.065_normoxia").any())
-    check("feed-dependent phenotypes are flagged",
-          eff[eff.phenotype == "mu_fedbatch_h"].confounded_by_feed.all())
+    fb = eff[eff.phenotype == "mu_fedbatch_h"]
+    check("feed-dependent phenotypes are flagged, except where the feed is itself the perturbation",
+          fb[fb.perturbation_type != "feed"].confounded_by_feed.all()
+          and not fb[fb.perturbation_type == "feed"].confounded_by_feed.any())
+    bs = eff[eff.campaign == "B. subtilis · surfactin feed rate"].set_index(["perturbation", "phenotype"])
+    ti = {p: bs.loc[(p, "titer_final_gL"), "mean"] for p in bs.index.get_level_values(0).unique() if "vs 0.075" in p}
+    best = max(ti, key=ti.get)
+    check("B. subtilis: surfactin peaks at µ = 0.25 h⁻¹ at about 36 g/L (paper's finding)",
+          "0.25" in best and 34 < ti[best] < 38, f"{best} → {ti[best]:.1f} g/L")
+    check("B. subtilis: the highest feed rate accumulates glucose (overfeeding)",
+          bs.loc[("feed for µ = 0.4 vs 0.075 h⁻¹", "glucose_end_gL"), "mean"] > 20
+          and bs.loc[("feed for µ = 0.3 vs 0.075 h⁻¹", "glucose_end_gL"), "mean"] < 5,
+          f"{bs.loc[('feed for µ = 0.4 vs 0.075 h⁻¹', 'glucose_end_gL'), 'mean']:.0f} g/L at µ = 0.4")
+    check("B. subtilis: batch-phase growth rate does not track the feed setpoint (negative control)",
+          abs(bs.xs("mu_batch_h", level=1)["pct_change"]).median() < 10,
+          f"median |change| {abs(bs.xs('mu_batch_h', level=1)['pct_change']).median():.1f} %")
 
 print(f"\n{sum(res)}/{len(res)} passed"); sys.exit(0 if all(res) else 1)

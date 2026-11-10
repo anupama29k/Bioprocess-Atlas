@@ -50,6 +50,7 @@ VARIABLES = {
     "osmolality_mOsm_kg": ("mOsm/kg", "osmolality"),
     "cell_diameter_um": ("µm", "mean diameter of viable cells"),
     "arabitol_gL":     ("g/L", "arabitol in broth"),
+    "ammonium_gL":     ("g/L", "ammonium in broth (mass basis, as reported)"),
     "product_activity_AU_mL": ("AU/mL", "target enzyme activity in broth (assay-specific units; compare within a product only)"),
 }
 
