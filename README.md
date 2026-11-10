@@ -108,7 +108,10 @@ tests/        test_atlas.py
 
 ## License and citation
 
-- **Code:** MIT (see `LICENSE`).
+Created and maintained by **Anupama Kozhiyalam** ([@anupama29k](https://github.com/anupama29k)).
+
+
+- **Code:** MIT, © 2026 Anupama Kozhiyalam (see `LICENSE`).
 - **Data:** each dataset keeps its original license (all CC BY 4.0 so far). If you use the release, cite the original studies listed above and this repository (see `CITATION.cff`).
 
 The growth-rate engine in `atlas/engine.py` is vendored from Bioprocess Analyzer at commit 2439bf9.

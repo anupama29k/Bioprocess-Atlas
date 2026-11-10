@@ -6,7 +6,8 @@ date-released: "2026-11-10"
 license: MIT
 repository-code: "https://github.com/anupama29k/bioprocess-atlas"
 authors:
-  - family-names: "Anupama"
+  - given-names: "Anupama"
+    family-names: "Kozhiyalam"
     alias: "anupama29k"
 keywords: [bioprocess, fermentation, perturbation atlas, bioreactor, open data]
 references:
