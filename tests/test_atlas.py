@@ -1,5 +1,6 @@
 """Tests for the Bioprocess Atlas build.   python tests/test_atlas.py"""
-import sys, tempfile
+import sys
+import pandas as pd, tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -17,11 +18,24 @@ with tempfile.TemporaryDirectory() as d:
           r["datasets"].measured.all() and set(runs.dataset_id) == set(r["datasets"].dataset_id),
           f"{len(runs)} runs, {len(r['datasets'])} datasets, {runs.organism.nunique()} organisms")
     check("run ids are unique", runs.run_id.is_unique)
-    check("11 explicit yeast contrasts", r["manifest"]["contrasts"] == 11)
+    con = pd.read_csv(Path(d) / "contrasts.csv")
+    ids = set(runs.run_id)
+    check("explicit contrasts: 11 yeast, 8 CHO-K1, and every listed run exists",
+          (con.dataset_id == "uhlendorff2026").sum() == 11 and (con.dataset_id == "uhlendorff2026_cho").sum() == 8
+          and all(set(s.split(";")) <= ids for s in pd.concat([con.runs, con.reference_runs])))
+    check("contaminated CHO-K1 reactor (EXP011 R02) is in no contrast",
+          not con.runs.str.contains("EXP011_R02").any() and not con.reference_runs.str.contains("EXP011_R02").any())
     check("every observation uses the controlled vocabulary", set(obs.variable) <= set(VARIABLES))
     check("every run has a DOI and license", runs.source_doi.str.len().gt(0).all() and runs.license.str.len().gt(0).all())
-    check("one reference condition per campaign",
-          runs[runs.is_reference].groupby("campaign").condition.nunique().eq(1).all())
+    implicit = runs[runs.condition != runs.reference_condition].campaign.unique()
+    check("one reference condition per campaign (runs-table comparisons)",
+          runs[runs.is_reference & runs.campaign.isin(implicit)].groupby("campaign").condition.nunique().eq(1).all())
+    k = eff[eff.campaign == "CHO-K1 · Uhlendorff"]
+    check("contrasts against the O2-failure reference (EXP005) report only early growth",
+          set(k[k.perturbation.isin(["glutamine 6 vs 8 mM", "seeding 6e5 vs 4e5 cells/mL"])].phenotype) == {"mu_batch_h"})
+    imp = k[(k.perturbation == "lowered impeller (batch)") & (k.phenotype == "vcd_max_1e6_mL")].iloc[0]
+    check("CHO-K1: lowered bottom impeller doubles peak VCD in TCX6D batch",
+          imp["pct_change"] > 50 and imp.p_welch < 0.05, f"{imp['pct_change']:+.0f} %, p = {imp.p_welch:.3f}")
     m = runs.merge(ph, on="run_id")
     hans = m[m.dataset_id == "hans2020"]
     check("glucose depletion found in the batch phase for every Hans run",

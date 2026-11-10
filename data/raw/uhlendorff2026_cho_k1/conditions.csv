@@ -1,0 +1,13 @@
+experiment,mode,medium,agitation_rpm,aeration_vvm,seeding_cells_mL,glutamine_mM,lower_impeller,feeding,events
+EXP001,Batch,TC-42,80,0.125,400000,8,standard (20 mm),none,no multifrequency permittivity scan for R02
+EXP002,Batch,TC-42,80,0.125,400000,8,standard (20 mm),none,no multifrequency permittivity scan for R02
+EXP003,Batch,TC-42,80,0.125,400000,8,standard (20 mm),none,no multifrequency permittivity scan for R02
+EXP004,Batch,TC-42,80,0.125,400000,8,standard (20 mm),none,
+EXP005,Batch,TC-42,100,0.04,400000,8,standard (20 mm),none,O2 supply impaired after ~55 h (cylinder closed); visible from ~103.6 h; reopened at 121.35 h
+EXP006,Batch,TC-42,100,0.04,600000,8,standard (20 mm),none,
+EXP007,Batch,TC-42,100,0.04,400000,6,standard (20 mm),none,
+EXP008,Batch,TCX6D,100,0.04,400000,8,standard (20 mm),none,
+EXP009,Batch,TCX6D,100,0.04,400000,8,lowered (6 mm),none,
+EXP010,Fed-batch,TC-42,100,0.04,400000,8,standard (20 mm),exponential from 48 h,R02 feed line blocked; feed effective from ~66 h
+EXP011,Fed-batch,TCX6D,100,0.04,400000,8,lowered (6 mm),exponential from 48 h,R02 bacterial contamination from ~51 h; R02 feed and O2 enrichment stopped ~67 h; Pen/Strep added to both reactors
+EXP012,Fed-batch,TCX6D,100,0.04,400000,8,standard (20 mm),exponential from 48 h,

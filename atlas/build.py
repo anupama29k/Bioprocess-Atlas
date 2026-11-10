@@ -48,8 +48,7 @@ def build(datasets=None, out: Path = OUT) -> dict:
     pheno.to_csv(out / "phenotypes.csv", index=False)
     eff.to_csv(out / "effects.csv", index=False)
     pd.DataFrame(meta).to_csv(out / "datasets.csv", index=False)
-    pd.DataFrame([{**{k: v for k, v in c.items() if k not in ("runs", "reference_runs")},
-                   "runs": ";".join(c["runs"]), "reference_runs": ";".join(c["reference_runs"])}
+    pd.DataFrame([{k: (";".join(map(str, v)) if isinstance(v, (list, tuple)) else v) for k, v in c.items()}
                   for c in contrasts]).to_csv(out / "contrasts.csv", index=False)
     digest = hashlib.sha256(pd.util.hash_pandas_object(obs, index=False).values.tobytes()).hexdigest()[:16]
     manifest = {

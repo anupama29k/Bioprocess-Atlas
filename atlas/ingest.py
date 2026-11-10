@@ -214,3 +214,80 @@ def schellenberg2021() -> Dataset:
 
 
 INGESTERS["schellenberg2021"] = schellenberg2021
+
+
+def uhlendorff2026_cho() -> Dataset:
+    """24 CHO-K1 batch/fed-batch runs in DASGIP reactors with inline turbidity, permittivity, O2 and CO2."""
+    D = ROOT / "uhlendorff2026_cho_k1"
+    cond = pd.read_csv(D / "conditions.csv").set_index("experiment")
+    inl = pd.read_csv(D / "inline_15min_medians.csv.gz")
+    ds = Dataset(
+        dataset_id="uhlendorff2026_cho",
+        title="CHO-K1 batch and fed-batch: agitation/aeration, seeding, glutamine, medium, impeller, feeding (24 runs)",
+        citation="Uhlendorff S et al. (2026) Zenodo dataset; data descriptor on Preprints.org 202611.0377",
+        doi="10.5281/zenodo.20829178", license="CC BY 4.0", measured=True)
+    excluded = {"EXP011_R02": "bacterial contamination from ~51 h", "EXP010_R02": "feed line blocked until ~66 h"}
+
+    def label(c):
+        s = (f"{c.mode} · {c.medium} · {c.agitation_rpm} rpm · {c.aeration_vvm:g} vvm · "
+             f"seed {c.seeding_cells_mL / 1e5:g}e5 · Gln {c.glutamine_mM:g} mM")
+        return s + (" · lowered impeller" if c.lower_impeller.startswith("lowered") else "")
+
+    rid = lambda exp, r: f"uhlendorff2026_cho:{exp}_{r}"
+    offmap = {"VCD Mean (cells/mL)": ("vcd_cells_mL", 1), "Viability Mean (%)": ("viability_percent", 1),
+              "Avg. diameter Mean (µm)": ("cell_diameter_um", 1), "Glucose (g/L)": ("glucose_gL", 1),
+              "Lactate (g/L)": ("lactate_gL", 1), "Ammonium (mM)": ("ammonium_mmolL", 1),
+              "Osmolality (mOsmol/kg)": ("osmolality_mOsm_kg", 1)}
+    inmap = {"Dissolved CO2 (%-sat)": "dCO2_percent", "Permittivity (pF/cm)": "permittivity_pF_cm",
+             "pH": "pH", "Dissolved O2 (% air sat)": "DO_percent", "Temperature (°C)": "temperature_C",
+             "Agitation rate (rpm)": "agitation_rpm"}
+    for f in sorted((D / "offline").glob("*_offline.csv")):
+        exp, mode, r = f.stem.split("_")[:3]
+        c = cond.loc[exp]
+        run_id = rid(exp, r)
+        key = f"{exp}_{r}"
+        ds.runs.append(Run(
+            run_id=run_id, dataset_id=ds.dataset_id, organism="Cricetulus griseus (CHO)", strain="CHO-K1 (non-producing)",
+            mode=c["mode"], vessel="DASGIP parallel stirred-tank bioreactor, 1 L max",
+            working_volume_L=0.65 if c["mode"] == "Batch" else 0.55, medium=c.medium, temperature_C=37.0, pH_setpoint=7.0,
+            replicate=int(r[1:]), campaign="uhlendorff2026_cho",
+            # comparisons for this dataset are the explicit contrasts below
+            reference_condition=label(c), condition=label(c), perturbation_type="none", is_reference=True,
+            source_doi=ds.doi, license=ds.license,
+            notes="; ".join(x for x in [f"experiment {exp}", str(c.events) if pd.notna(c.events) else "",
+                                         f"excluded from contrasts: {excluded[key]}" if key in excluded else ""] if x)))
+        off = pd.read_csv(f)
+        for col, (var, k) in offmap.items():
+            for t, v in off[["Time (h)", col]].dropna().itertuples(index=False):
+                ds.observations.append((run_id, float(t), var, float(v) * k))
+        sub = inl[inl.run == f"{exp}_{mode}_{r}"]
+        for col, var in inmap.items():
+            for t, v in sub[["Time (h)", col]].dropna().itertuples(index=False):
+                ds.observations.append((run_id, float(t), var, float(v)))
+
+    def runs(*exps, only=None):
+        out = [rid(e, r) for e in exps for r in ("R01", "R02")]
+        out = [x for x in out if x.split(":")[1] not in excluded]
+        return [x for x in out if only is None or x.endswith(only)]
+
+    # Runs stopped at different times, so end-of-run viability is not comparable here.
+    # EXP005's O2 supply failed from ~104 h to 121 h (peak VCD at 121.5 h): contrasts that use it
+    # as reference keep only phenotypes settled before ~100 h.
+    EARLY = ["mu_batch_h"]
+
+    def add(ptype, pert, dose, a, b, early_only=False):
+        ds.contrasts.append(dict(
+            campaign="CHO-K1 · Uhlendorff", perturbation_type=ptype, perturbation=pert, dose=dose, runs=a,
+            reference_runs=b, exclude_phenotypes=["viability_end_pct"], **({"phenotypes": EARLY} if early_only else {})))
+    add("other", "100 rpm + 0.04 vvm vs 80 rpm + 0.125 vvm", None, runs("EXP005"), runs("EXP001", "EXP002", "EXP003", "EXP004"), early_only=True)
+    add("other", "seeding 6e5 vs 4e5 cells/mL", 6e5, runs("EXP006"), runs("EXP005"), early_only=True)
+    add("medium", "glutamine 6 vs 8 mM", 6, runs("EXP007"), runs("EXP005"), early_only=True)
+    add("medium", "TCX6D vs TC-42 medium (batch)", None, runs("EXP008"), runs("EXP005"), early_only=True)
+    add("other", "lowered impeller (batch)", None, runs("EXP009"), runs("EXP008"))
+    add("feed", "fed-batch vs batch (TC-42)", None, runs("EXP010"), runs("EXP005"), early_only=True)
+    add("medium", "TCX6D vs TC-42 medium (fed-batch)", None, runs("EXP012"), runs("EXP010"))
+    add("other", "lowered impeller (fed-batch)", None, runs("EXP011"), runs("EXP012"))
+    return ds
+
+
+INGESTERS["uhlendorff2026_cho"] = uhlendorff2026_cho

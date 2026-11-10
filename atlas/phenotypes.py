@@ -34,6 +34,7 @@ PHENOTYPES = {
     "ivcd_1e9_cells_h_L":    ("10⁹ cells·h/L", "integral of viable cell density over the run (trapezoid)", False),
     "titer_final_gL":        ("g/L", "product titer at the last sample", False),
     "qp_pg_cell_day":        ("pg/cell/day", "cell-specific productivity: product made ÷ integral of viable cells", False),
+    "viability_80_h":        ("h", "first sample after peak VCD with viability below 80 % (culture decline)", False),
     "diameter_end_um":       ("µm", "mean viable cell diameter at the last sample", False),
     "mu_fedbatch_h":         ("h⁻¹", "mean growth rate after glucose depletion (fed-batch); depends on the feed", True),
     "biomass_final_gL":      ("g/L", "last measured biomass", True),
@@ -66,6 +67,12 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
         tt, vv = _series(obs, var)
         if len(tt):
             out[key] = float(vv[-1])
+    tvi, vi = _series(obs, "viability_percent")
+    if len(tv) >= 3 and len(tvi):
+        t_pk = tv[np.argmax(v)]
+        late = tvi[(tvi >= t_pk) & (vi < 80)]
+        if len(late):
+            out["viability_80_h"] = float(late[0])
     tl, lac = _series(obs, "lactate_gL")
     if len(tl):
         out["lactate_peak_gL"] = float(lac.max())
@@ -135,7 +142,7 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
                 out["acetate_reconsumed_frac"] = float(
                     np.clip(1 - late.mean() / out["acetate_peak_gL"], -1, 1))
 
-    if len(tg) and t_dep is not None:
+    if len(tg) and t_dep is not None and not cell_counts:   # g/g yield needs biomass, not cell counts
         m = tg <= t_dep
         gx = np.interp(tg[m], tx, x) if m.sum() else []
         if m.sum() >= 3 and np.all(np.diff(g[m]) < 0):
@@ -175,8 +182,10 @@ def effects(runs: pd.DataFrame, pheno: pd.DataFrame, contrasts=None) -> pd.DataF
     names = [p for p in PHENOTYPES if not p.endswith("_se_h")]
     rows = []
 
-    def emit(base, a_df, b_df):
+    def emit(base, a_df, b_df, only=None, exclude=()):
         for p in names:
+            if (only is not None and p not in only) or p in exclude:
+                continue
             if p not in a_df or p not in b_df:
                 continue
             a, b = a_df[p].dropna().to_numpy(float), b_df[p].dropna().to_numpy(float)
@@ -201,5 +210,6 @@ def effects(runs: pd.DataFrame, pheno: pd.DataFrame, contrasts=None) -> pd.DataF
             continue
         emit({"campaign": c["campaign"], "condition": a_df.condition.iloc[0],
               "reference": b_df.condition.iloc[0], "perturbation_type": c["perturbation_type"],
-              "perturbation": c["perturbation"], "dose": c.get("dose", np.nan)}, a_df, b_df)
+              "perturbation": c["perturbation"], "dose": c.get("dose", np.nan)}, a_df, b_df,
+             only=c.get("phenotypes"), exclude=c.get("exclude_phenotypes", ()))
     return pd.DataFrame(rows)

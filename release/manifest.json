@@ -1,10 +1,10 @@
 {
   "schema_version": "0.2",
-  "datasets": 4,
-  "runs": 98,
-  "observations": 101999,
-  "conditions": 36,
-  "contrasts": 11,
+  "datasets": 5,
+  "runs": 122,
+  "observations": 218909,
+  "conditions": 48,
+  "contrasts": 19,
   "organisms": [
     "Cricetulus griseus (CHO)",
     "Escherichia coli",
@@ -12,7 +12,7 @@
     "Saccharomyces pastorianus"
   ],
   "perturbations": 19,
-  "observations_sha256_16": "94085d7ed55d8685",
+  "observations_sha256_16": "14ab0e6f9c17bc09",
   "engine": "bioprocessanalyzer@2439bf9",
   "variables": {
     "od600": {
@@ -198,6 +198,11 @@
     "qp_pg_cell_day": {
       "unit": "pg/cell/day",
       "description": "cell-specific productivity: product made ÷ integral of viable cells",
+      "confounded_by_feed": false
+    },
+    "viability_80_h": {
+      "unit": "h",
+      "description": "first sample after peak VCD with viability below 80 % (culture decline)",
       "confounded_by_feed": false
     },
     "diameter_end_um": {
