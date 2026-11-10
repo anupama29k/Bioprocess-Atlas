@@ -44,6 +44,11 @@ VARIABLES = {
     "extract_plato":   ("°P", "real extract (dissolved solids), °P = 259 − 259/SG"),
     "dCO2_percent":    ("% sat.", "dissolved CO2"),
     "permittivity_pF_cm": ("pF/cm", "dielectric permittivity (live-biomass proxy)"),
+    "glutamine_gL":    ("g/L", "glutamine in broth"),
+    "glutamate_gL":    ("g/L", "glutamate in broth"),
+    "ammonium_mmolL":  ("mmol/L", "ammonium in broth"),
+    "osmolality_mOsm_kg": ("mOsm/kg", "osmolality"),
+    "cell_diameter_um": ("µm", "mean diameter of viable cells"),
 }
 
 PERTURBATION_TYPES = ("none", "gene_knockout", "strain", "medium", "feed",

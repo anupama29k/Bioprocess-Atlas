@@ -13,9 +13,10 @@ def check(name, cond, detail=""):
 with tempfile.TemporaryDirectory() as d:
     r = build(out=Path(d))
     runs, obs, ph, eff = r["runs"], r["observations"], r["phenotypes"], r["effects"]
-    check("77 runs from 3 measured datasets, 3 organisms",
-          len(runs) == 77 and len(r["datasets"]) == 3 and r["datasets"].measured.all()
-          and runs.organism.nunique() == 3)
+    check("every dataset is measured, and every run belongs to a listed dataset",
+          r["datasets"].measured.all() and set(runs.dataset_id) == set(r["datasets"].dataset_id),
+          f"{len(runs)} runs, {len(r['datasets'])} datasets, {runs.organism.nunique()} organisms")
+    check("run ids are unique", runs.run_id.is_unique)
     check("11 explicit yeast contrasts", r["manifest"]["contrasts"] == 11)
     check("every observation uses the controlled vocabulary", set(obs.variable) <= set(VARIABLES))
     check("every run has a DOI and license", runs.source_doi.str.len().gt(0).all() and runs.license.str.len().gt(0).all())
@@ -37,14 +38,26 @@ with tempfile.TemporaryDirectory() as d:
     y = eff[eff.campaign == "uhlendorff2026 · W-68"]
     t37 = y[(y.perturbation.str.startswith("37")) & (y.phenotype == "vcd_max_1e6_mL")].iloc[0]
     check("S. cerevisiae W-68 at 37 °C reaches far fewer cells than same-day 22 °C controls",
-          t37["pct_change"] < -50 and t37.p_welch < 0.05, f"{t37["pct_change"]:.0f} %, p = {t37.p_welch:.3f}")
+          t37["pct_change"] < -50 and t37.p_welch < 0.05, f"{t37['pct_change']:.0f} %, p = {t37.p_welch:.3f}")
     l37 = eff[(eff.campaign == "uhlendorff2026 · W-34/70") & eff.perturbation.str.startswith("37")
               & (eff.phenotype == "vcd_max_1e6_mL")].iloc[0]
     check("lager strain W-34/70 keeps its peak cell density at 37 °C", abs(l37["pct_change"]) < 10,
-          f"{l37["pct_change"]:+.0f} %")
+          f"{l37['pct_change']:+.0f} %")
     pre = eff[(eff.perturbation == "3 h vs 24 h pre-culture") & (eff.phenotype == "vcd_max_1e6_mL")]
     check("short 3 h pre-culture lowers peak VCD in both strains",
           (pre["pct_change"] < -30).all() and (pre.p_welch < 0.01).all(), ", ".join(f"{v:.0f} %" for v in pre["pct_change"]))
+    c = eff[eff.campaign.str.startswith("schellenberg2021")].set_index(["perturbation", "phenotype"])
+    qp = lambda p: c.loc[(p, "qp_pg_cell_day"), "pct_change"]
+    check("CHO: glucose overfeeding raises IgG titer and cell-specific productivity (paper's finding)",
+          c.loc[("glucose 12 g/L (overfeeding)", "titer_final_gL"), "pct_change"] > 10 and qp("glucose 12 g/L (overfeeding)") > 20,
+          f"titer {c.loc[('glucose 12 g/L (overfeeding)', 'titer_final_gL'), 'pct_change']:+.0f} %, qP {qp('glucose 12 g/L (overfeeding)'):+.0f} %")
+    check("CHO: CO2 limitation raises cell-specific productivity", qp("CO2 limitation") > 10, f"qP {qp('CO2 limitation'):+.0f} %")
+    big = c.loc[("glutamate 2 g/L (low glutamine)", "diameter_end_um"), "pct_change"]
+    check("CHO: glutamate arms make bigger, more productive cells", big > 10 and qp("glutamate 2 g/L (low glutamine)") > 50,
+          f"diameter {big:+.0f} %, qP {qp('glutamate 2 g/L (low glutamine)'):+.0f} %")
+    check("CHO qP is in the usual range for an IgG producer (5–60 pg/cell/day)",
+          ph.qp_pg_cell_day.dropna().between(5, 60).all(), f"{ph.qp_pg_cell_day.min():.0f}–{ph.qp_pg_cell_day.max():.0f}")
+    check("single-vessel references get no p-value", c.p_welch.isna().all())
     check("feed-dependent phenotypes are flagged",
           eff[eff.phenotype == "mu_fedbatch_h"].confounded_by_feed.all())
 

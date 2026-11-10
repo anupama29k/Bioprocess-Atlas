@@ -1,17 +1,18 @@
 {
   "schema_version": "0.2",
-  "datasets": 3,
-  "runs": 77,
-  "observations": 100239,
-  "conditions": 27,
+  "datasets": 4,
+  "runs": 98,
+  "observations": 101999,
+  "conditions": 36,
   "contrasts": 11,
   "organisms": [
+    "Cricetulus griseus (CHO)",
     "Escherichia coli",
     "Saccharomyces cerevisiae",
     "Saccharomyces pastorianus"
   ],
-  "perturbations": 11,
-  "observations_sha256_16": "57efb95c6a62d1a9",
+  "perturbations": 19,
+  "observations_sha256_16": "94085d7ed55d8685",
   "engine": "bioprocessanalyzer@2439bf9",
   "variables": {
     "od600": {
@@ -101,6 +102,26 @@
     "permittivity_pF_cm": {
       "unit": "pF/cm",
       "description": "dielectric permittivity (live-biomass proxy)"
+    },
+    "glutamine_gL": {
+      "unit": "g/L",
+      "description": "glutamine in broth"
+    },
+    "glutamate_gL": {
+      "unit": "g/L",
+      "description": "glutamate in broth"
+    },
+    "ammonium_mmolL": {
+      "unit": "mmol/L",
+      "description": "ammonium in broth"
+    },
+    "osmolality_mOsm_kg": {
+      "unit": "mOsm/kg",
+      "description": "osmolality"
+    },
+    "cell_diameter_um": {
+      "unit": "µm",
+      "description": "mean diameter of viable cells"
     }
   },
   "phenotypes": {
@@ -157,6 +178,31 @@
     "DO_min_pct": {
       "unit": "% sat.",
       "description": "lowest dissolved oxygen (< 5 % = oxygen-limited)",
+      "confounded_by_feed": false
+    },
+    "lactate_peak_gL": {
+      "unit": "g/L",
+      "description": "highest lactate in the run",
+      "confounded_by_feed": false
+    },
+    "ivcd_1e9_cells_h_L": {
+      "unit": "10⁹ cells·h/L",
+      "description": "integral of viable cell density over the run (trapezoid)",
+      "confounded_by_feed": false
+    },
+    "titer_final_gL": {
+      "unit": "g/L",
+      "description": "product titer at the last sample",
+      "confounded_by_feed": false
+    },
+    "qp_pg_cell_day": {
+      "unit": "pg/cell/day",
+      "description": "cell-specific productivity: product made ÷ integral of viable cells",
+      "confounded_by_feed": false
+    },
+    "diameter_end_um": {
+      "unit": "µm",
+      "description": "mean viable cell diameter at the last sample",
       "confounded_by_feed": false
     },
     "mu_fedbatch_h": {

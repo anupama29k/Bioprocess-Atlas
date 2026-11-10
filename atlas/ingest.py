@@ -160,3 +160,57 @@ def uhlendorff2026() -> Dataset:
 
 
 INGESTERS["uhlendorff2026"] = uhlendorff2026
+
+
+def schellenberg2021() -> Dataset:
+    """CHO DG44 (IgG producer), 12-day fed-batch: nutrient, pH and CO2 stress vs standard process."""
+    D = ROOT / "schellenberg2021_cho_dg44_stress"
+    ds = Dataset(
+        dataset_id="schellenberg2021",
+        title="CHO DG44 IgG fed-batch: glutamate, glucose, feed, pH and CO2 stress vs standard process (ambr15 and shake flask)",
+        citation="Schellenberg J, Solle D et al. (2021) LUH research data; Eng Life Sci 2022, doi:10.1002/elsc.202100062",
+        doi="10.25835/0066265", license="CC0 1.0", measured=True)
+    # file prefix → (campaign, condition label, perturbation type, dose, vessel, volume, pH set point)
+    AMBR, SF = ("ambr15 microbioreactor", 0.015), ("500 mL shake flask", None)
+    design = {
+        "nu_reference": ("ambr15 · nutrients", "standard process", "none", None, AMBR, None),
+        "nu_1.1": ("ambr15 · nutrients", "glutamate 1.2 g/L (low glutamine)", "medium", 1.2, AMBR, None),
+        "nu_1.2": ("ambr15 · nutrients", "glutamate 2 g/L (low glutamine)", "medium", 2.0, AMBR, None),
+        "nu_2":   ("ambr15 · nutrients", "glucose 12 g/L (overfeeding)", "feed", 12.0, AMBR, None),
+        "nu_3":   ("ambr15 · nutrients", "decreased feed", "feed", None, AMBR, None),
+        "ph_reference": ("ambr15 · pH", "standard process", "none", None, AMBR, None),
+        "ph_0":   ("ambr15 · pH", "pH 7.3 from day 0", "pH", 7.3, AMBR, 7.3),
+        "ph_5":   ("ambr15 · pH", "pH 7.3 from day 5", "pH", 7.3, AMBR, 7.3),
+        "sf_reference": ("shake flask", "standard process", "none", None, SF, None),
+        "sf_nu":  ("shake flask", "nutrient limitation", "medium", None, SF, None),
+        "sf_co2": ("shake flask", "CO2 limitation", "other", None, SF, None),
+    }
+    cols = {"VCC": ("vcd_cells_mL", 1e6), "Viability": ("viability_percent", 1), "Average diameter": ("cell_diameter_um", 1),
+            "IgG": ("product_gL", 1), "Glucose": ("glucose_gL", 1), "Lactate": ("lactate_gL", 1),
+            "Glutamine": ("glutamine_gL", 1), "Glutamate": ("glutamate_gL", 1)}
+    for f in sorted(D.glob("*.csv")):
+        stem = f.stem
+        key = next(k for k in sorted(design, key=len, reverse=True) if stem.startswith(k + "_") or stem.startswith(k + "-"))
+        camp, label, ptype, dose, (vessel, vol), ph = design[key]
+        is_ref = ptype == "none"
+        rep = 1 if is_ref else int(stem[len(key) + 1])
+        rid = f"schellenberg2021:{key}_{rep}"
+        ds.runs.append(Run(
+            run_id=rid, dataset_id=ds.dataset_id, organism="Cricetulus griseus (CHO)", strain="CHO DG44, IgG producer",
+            mode="Fed-batch", vessel=vessel, working_volume_L=vol, medium="chemically defined, fed-batch (12 d)",
+            temperature_C=None, pH_setpoint=ph, replicate=rep, campaign=f"schellenberg2021 · {camp}",
+            reference_condition="standard process", condition=label, perturbation_type=ptype,
+            perturbation="" if is_ref else label, perturbation_dose=dose, is_reference=is_ref,
+            source_doi=ds.doi, license=ds.license,
+            notes="reference arm has a single vessel: effects get a difference but no p-value"
+                  + ("; glutamine near zero at day 0 in these vessels (as measured)" if key.startswith("nu_1") else "")))
+        df = pd.read_csv(f, sep=";", skiprows=[1], na_values=["--", ""], encoding="utf-8")
+        df = df.loc[:, ~df.columns.str.startswith("Unnamed")].dropna(subset=["ProcessTime"])
+        df["t"] = df.ProcessTime.str.replace("Day", "").astype(float) * 24.0
+        for col, (var, k) in cols.items():
+            for t, v in df[["t", col]].dropna().itertuples(index=False):
+                ds.observations.append((rid, float(t), var, float(v) * k))
+    return ds
+
+
+INGESTERS["schellenberg2021"] = schellenberg2021

@@ -30,6 +30,11 @@ PHENOTYPES = {
     "ethanol_end_pct_ww":    ("% w/w", "alcohol at the last sample", False),
     "extract_consumed_frac": ("–", "fraction of the initial real extract consumed by the last sample", False),
     "DO_min_pct":            ("% sat.", "lowest dissolved oxygen (< 5 % = oxygen-limited)", False),
+    "lactate_peak_gL":       ("g/L", "highest lactate in the run", False),
+    "ivcd_1e9_cells_h_L":    ("10⁹ cells·h/L", "integral of viable cell density over the run (trapezoid)", False),
+    "titer_final_gL":        ("g/L", "product titer at the last sample", False),
+    "qp_pg_cell_day":        ("pg/cell/day", "cell-specific productivity: product made ÷ integral of viable cells", False),
+    "diameter_end_um":       ("µm", "mean viable cell diameter at the last sample", False),
     "mu_fedbatch_h":         ("h⁻¹", "mean growth rate after glucose depletion (fed-batch); depends on the feed", True),
     "biomass_final_gL":      ("g/L", "last measured biomass", True),
 }
@@ -61,6 +66,25 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
         tt, vv = _series(obs, var)
         if len(tt):
             out[key] = float(vv[-1])
+    tl, lac = _series(obs, "lactate_gL")
+    if len(tl):
+        out["lactate_peak_gL"] = float(lac.max())
+    tdm, dm = _series(obs, "cell_diameter_um")
+    if len(tdm):
+        out["diameter_end_um"] = float(dm[-1])
+    tp, prod = _series(obs, "product_gL")
+    if len(tp):
+        out["titer_final_gL"] = float(prod[-1])
+    if len(tv) >= 3:
+        ivcd = np.trapezoid(v, tv) if hasattr(np, "trapezoid") else np.trapz(v, tv)   # cells·h/mL
+        out["ivcd_1e9_cells_h_L"] = float(ivcd * 1e3 / 1e9)
+        if len(tp) >= 2 and ivcd > 0:
+            # ΔP between first and last product sample over the IVCD of the same window
+            w = (tv >= tp[0]) & (tv <= tp[-1])
+            iv = np.trapezoid(v[w], tv[w]) if hasattr(np, "trapezoid") else np.trapz(v[w], tv[w])
+            if iv > 0:
+                # g/L ÷ (cells·h/mL) → pg/cell/day : ×1e12 pg/g ÷ 1e3 mL/L × 24 h/day
+                out["qp_pg_cell_day"] = float((prod[-1] - prod[0]) / iv * 1e12 / 1e3 * 24)
     te, ex = _series(obs, "extract_plato")
     if len(te) >= 2 and ex[0] > 0:
         out["extract_consumed_frac"] = float((ex[0] - ex[-1]) / ex[0])
