@@ -21,6 +21,7 @@ CAMPAIGN_NAMES = {
     "CHO-K1 · Uhlendorff": "CHO-K1 · process changes",
     "B. subtilis · surfactin feed rate": "B. subtilis · surfactin feed rate",
     "K. phaffii · hypoxia": "K. phaffii · hypoxia",
+    "schapertoens2026 · FB4": "NISTCHO · feeding strategies",
     "schellenberg2021 · ambr15 · nutrients": "CHO DG44 · nutrients (ambr15)",
     "schellenberg2021 · ambr15 · pH": "CHO DG44 · pH (ambr15)",
     "schellenberg2021 · shake flask": "CHO DG44 · stress (shake flask)",

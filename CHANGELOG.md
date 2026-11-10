@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.4.0 — 2026-11-10
+
+8 measured datasets · 171 runs · 6 organisms · 48 one-factor comparisons · 222,062 observations
+
+**New dataset**
+
+- `schapertoens2026` — NISTCHO fed-batch under seven feeding strategies (feed frequency, glucose level, galactose supplementation), 25 vessels, with cNISTmAb titer **and N-glycan product quality**. CC BY 4.0. The atlas's first product-quality data: galactose supplementation roughly doubles galactosylation and halves the G0F share, with no titer penalty on the standard feed.
+
+**Schema 0.4**
+
+- New variables: galactosylation index, afucosylation percent, G0F percent.
+- New phenotypes: galactosylation, afucosylation and G0F at the last sample.
+
+31 tests.
+
 ## v0.3.0 — 2026-11-10
 
 7 measured datasets · 146 runs · 6 organisms · 45 one-factor comparisons · 220,453 observations

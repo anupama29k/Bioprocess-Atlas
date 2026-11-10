@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 
-SCHEMA_VERSION = "0.3"
+SCHEMA_VERSION = "0.4"
 
 # Controlled vocabulary: variable name → (unit, description). Names carry the unit.
 VARIABLES = {
@@ -51,6 +51,9 @@ VARIABLES = {
     "cell_diameter_um": ("µm", "mean diameter of viable cells"),
     "arabitol_gL":     ("g/L", "arabitol in broth"),
     "ammonium_gL":     ("g/L", "ammonium in broth (mass basis, as reported)"),
+    "galactosylation_index": ("galactoses/glycan", "mean galactose residues per N-glycan on the product (0–2)"),
+    "afucosylation_percent": ("%", "N-glycans on the product lacking core fucose"),
+    "g0f_percent":     ("%", "share of the product carrying G0F on both heavy chains"),
     "product_activity_AU_mL": ("AU/mL", "target enzyme activity in broth (assay-specific units; compare within a product only)"),
 }
 

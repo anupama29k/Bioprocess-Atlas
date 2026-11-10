@@ -37,6 +37,9 @@ PHENOTYPES = {
     "acetate_end_gL":        ("g/L", "acetate at the last sample (late overflow, unlike the batch-phase peak)", False),
     "glucose_end_gL":        ("g/L", "glucose at the last sample (high = fed faster than consumed)", True),
     "product_per_biomass_gg": ("g/g", "product titer ÷ biomass at the last sample", False),
+    "galactosylation_end_idx": ("galactoses/glycan", "mean galactose per N-glycan at the last sample (product quality)", False),
+    "afucosylation_end_pct": ("%", "afucosylated N-glycans at the last sample (product quality)", False),
+    "g0f_end_pct":           ("%", "G0F/G0F share at the last sample (product quality)", False),
     "activity_final_AU_mL":  ("AU/mL", "product activity at the last sample (assay-specific; compare within a product)", False),
     "ethanol_end_gL":        ("g/L", "ethanol at the last sample", False),
     "arabitol_end_gL":       ("g/L", "arabitol at the last sample", False),
@@ -88,7 +91,8 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
     if len(tdm):
         out["diameter_end_um"] = float(dm[-1])
     for var, key in (("product_activity_AU_mL", "activity_final_AU_mL"), ("ethanol_gL", "ethanol_end_gL"),
-                     ("arabitol_gL", "arabitol_end_gL")):
+                     ("arabitol_gL", "arabitol_end_gL"), ("galactosylation_index", "galactosylation_end_idx"),
+                     ("afucosylation_percent", "afucosylation_end_pct"), ("g0f_percent", "g0f_end_pct")):
         tt, vv = _series(obs, var)
         if len(tt):
             out[key] = float(vv[-1])

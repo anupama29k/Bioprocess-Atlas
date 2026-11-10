@@ -451,3 +451,88 @@ def hiller2024() -> Dataset:
 
 
 INGESTERS["hiller2024"] = hiller2024
+
+
+def schapertoens2026() -> Dataset:
+    """NISTCHO fed-batch under seven feeding strategies, with titer and N-glycan quality attributes."""
+    D = ROOT / "schapertoens2026_nistcho_feeding"
+    ds = Dataset(
+        dataset_id="schapertoens2026",
+        title="NISTCHO fed-batch: feeding frequency, glucose level and galactose supplementation, with product N-glycan quality",
+        citation="Schäpertöns V et al. (2026) npj Systems Biology and Applications 12:67; data on Zenodo",
+        doi="10.5281/zenodo.18609042", license="CC BY 4.0", measured=True)
+    # letter code in the raw files → (strategy name, campaign/batch)
+    NAME = {"A": ("STD", "FB4"), "B": ("STD+", "FB4"), "C": ("LoG+", "FB4"), "G": ("LoG", "FB4"),
+            "D": ("HiF", "FB2"), "E": ("HIP", "FB2"), "F": ("HIP+", "FB2")}
+    WHAT = {"STD": "standard feed", "STD+": "standard feed + galactose",
+            "LoG": "low glucose", "LoG+": "low glucose + galactose",
+            "HiF": "high feed frequency", "HIP": "high initial product feed",
+            "HIP+": "high initial product feed + galactose"}
+    rid = lambda c, r: f"schapertoens2026:{NAME[c][0]}_R{int(r)}"
+
+    growth = pd.read_csv(D / "01_ViCell_growth_data.csv")
+    growth["rep"] = growth.Replicate.str.replace("R", "").astype(int)
+    titer = pd.read_csv(D / "03_ViCell_titer.csv")
+    lact = pd.read_csv(D / "04_lactate.csv")
+    lact.columns = [c.strip() for c in lact.columns]
+    lact["rep"] = lact.Replicate.str.replace("R", "").astype(int)
+    gluc = pd.read_excel(D / "05_glucose_data.xlsx")
+
+    for c, (name, batch) in NAME.items():
+        reps = sorted(growth[growth.Condition == c].rep.unique())
+        for r in reps:
+            is_ref = (name == "STD")
+            ds.runs.append(Run(
+                run_id=rid(c, r), dataset_id=ds.dataset_id, organism="Cricetulus griseus (CHO)",
+                strain="NISTCHO, cNISTmAb producer", mode="Fed-batch", vessel="50 mL TubeSpin bioreactor tube",
+                working_volume_L=0.020, medium=f"chemically defined fed-batch, {WHAT[name]}",
+                temperature_C=None, pH_setpoint=None, replicate=int(r),
+                campaign=f"schapertoens2026 · {batch}",
+                # FB2 was run as a separate campaign with no standard-feed arm, so its runs
+                # carry no reference and produce no effect rows (see the dataset README).
+                reference_condition=("STD" if batch == "FB4" else name), condition=name,
+                perturbation_type="none" if is_ref else "feed", perturbation="" if is_ref else WHAT[name],
+                is_reference=is_ref, source_doi=ds.doi, license=ds.license,
+                notes=f"campaign {batch}; letter code {c} in the source files"
+                      + ("" if batch == "FB4" else "; no same-campaign standard-feed reference")))
+
+    for row in growth.itertuples():
+        for col, var, k in (("Total_VCD", "vcd_cells_mL", 1e6), ("Viability", "viability_percent", 1),
+                            ("Average_diameter", "cell_diameter_um", 1)):
+            v = getattr(row, col)
+            if pd.notna(v):
+                ds.observations.append((rid(row.Condition, row.rep), float(row.Hours), var, float(v) * k))
+    for row in titer.dropna(subset=["Titer_ug.mL"]).itertuples():
+        c = next(k for k, (n, _) in NAME.items() if n == row.Condition)
+        ds.observations.append((rid(c, row.Replicate), float(row.Hours), "product_gL",
+                                float(getattr(row, "_13")) / 1000.0))
+    for row in lact.itertuples():
+        ds.observations.append((rid(row.Condition, row.rep), float(row.Hours), "lactate_gL",
+                                float(row.c_mM) * 0.09008))       # lactate, 90.08 g/mol
+    for row in gluc.itertuples():
+        ds.observations.append((rid(row.Condition, row.Replicate), float(row.Hour), "glucose_gL",
+                                float(getattr(row, "_4"))))
+
+    # Product N-glycans: one file per condition, replicate and sampling hour.
+    # Rows are glycoform pairs (both heavy chains); Hex 6 = G0/G0, each extra Hex is one galactose;
+    # Fuc counts core fucoses on the pair. Only complete pairs (HexNAc 8) are used, renormalised.
+    for f in sorted((D / "glyco").glob("*.csv")):
+        c, rep, hour = f.stem.split("_")
+        g = pd.read_csv(f)
+        g = g[g.HexNAc == 8].copy()
+        if g.empty:
+            continue
+        ab = g.corr_abundance.fillna(g.abundance).astype(float)
+        tot = ab.sum()
+        if tot <= 0:
+            continue
+        run, t = rid(c, rep), float(hour)
+        ds.observations.append((run, t, "galactosylation_index", float((ab * (g.Hex - 6)).sum() / tot / 2)))
+        ds.observations.append((run, t, "afucosylation_percent",
+                                float((ab * (2 - g.Fuc.fillna(0))).sum() / tot / 2 * 100)))
+        g0f = ab[g.glycoform == "A2G0F/A2G0F"].sum()
+        ds.observations.append((run, t, "g0f_percent", float(g0f / tot * 100)))
+    return ds
+
+
+INGESTERS["schapertoens2026"] = schapertoens2026

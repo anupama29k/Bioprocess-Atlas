@@ -82,6 +82,22 @@ with tempfile.TemporaryDirectory() as d:
     check("the misaligned Pichia run (µ = 0.065 normoxia) is not in the atlas",
           not runs.run_id.str.contains("mu0.065_normoxia").any())
     fb = eff[eff.phenotype == "mu_fedbatch_h"]
+    nist = eff[eff.campaign == "schapertoens2026 · FB4"].set_index(["perturbation", "phenotype"])
+    gal = [p for p in nist.index.get_level_values(0).unique() if "galactose" in p]
+    check("NISTCHO: every galactose-supplemented feed raises galactosylation and lowers G0F (paper's finding)",
+          len(gal) == 2
+          and all(nist.loc[(p, "galactosylation_end_idx"), "pct_change"] > 50 for p in gal)
+          and all(nist.loc[(p, "g0f_end_pct"), "pct_change"] < -20 for p in gal)
+          and all(nist.loc[(p, "galactosylation_end_idx"), "p_welch"] < 0.01 for p in gal),
+          ", ".join(f"{p}: galactosylation {nist.loc[(p, 'galactosylation_end_idx'), 'pct_change']:+.0f} %" for p in gal))
+    check("NISTCHO: galactose on the standard feed costs no titer, while low glucose does",
+          abs(nist.loc[("standard feed + galactose", "titer_final_gL"), "pct_change"]) < 15
+          and nist.loc[("low glucose", "titer_final_gL"), "pct_change"] < -40,
+          f"STD+ {nist.loc[('standard feed + galactose', 'titer_final_gL'), 'pct_change']:+.0f} %, "
+          f"LoG {nist.loc[('low glucose', 'titer_final_gL'), 'pct_change']:+.0f} %")
+    check("the NISTCHO campaign without a standard-feed arm (FB2) produces no effect rows",
+          eff[eff.campaign == "schapertoens2026 · FB2"].empty
+          and runs[runs.campaign == "schapertoens2026 · FB2"].run_id.nunique() == 9)
     check("feed-dependent phenotypes are flagged, except where the feed is itself the perturbation",
           fb[fb.perturbation_type != "feed"].confounded_by_feed.all()
           and not fb[fb.perturbation_type == "feed"].confounded_by_feed.any())

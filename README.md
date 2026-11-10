@@ -6,7 +6,7 @@
 
 | release | datasets | bioreactor runs | organisms | one-factor comparisons | observations |
 |---|---|---|---|---|---|
-| v0.3 | 7 | 146 | 6 (*E. coli*, *B. subtilis*, two brewing yeasts, *K. phaffii*, CHO) | 45 | 220,453 |
+| v0.4 | 8 | 171 | 6 (*E. coli*, *B. subtilis*, two brewing yeasts, *K. phaffii*, CHO) | 48 | 222,062 |
 
 ## Why
 
@@ -59,6 +59,7 @@ Phenotypes are taken only from phases in which both arms had the same conditions
 | `uhlendorff2026` | Brewing yeast propagation: 2 strains × temperature, aeration, wort gravity, pre-culture, scale | 52 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.19690248](https://doi.org/10.5281/zenodo.19690248) | CC BY 4.0 |
 | `schellenberg2021` | CHO DG44 IgG producer, 12-day fed-batch: glutamate, glucose overfeeding, reduced feed, pH and CO2 stress vs standard process (ambr15 and shake flask) | 21 | Solle D, Schellenberg J (2021) LUH. [doi:10.25835/0066265](https://doi.org/10.25835/0066265); paper [doi:10.1002/elsc.202100062](https://doi.org/10.1002/elsc.202100062) | CC0 1.0 |
 | `salesvallverdu2024` | *K. phaffii* (*Pichia*) glucose-limited fed-batch: hypoxia vs normoxia at four growth rates and for three secreted lipases | 11 | Sales-Vallverdú A et al. (2024) Microb Biotechnol 17:e14411; data [doi:10.34810/data1118](https://doi.org/10.34810/data1118) | CC BY 4.0 |
+| `schapertoens2026` | NISTCHO fed-batch under seven feeding strategies (feed frequency, glucose level, galactose), with titer **and N-glycan product quality** | 25 | Schäpertöns V et al. (2026) npj Syst Biol Appl 12:67. [doi:10.5281/zenodo.18609042](https://doi.org/10.5281/zenodo.18609042) | CC BY 4.0 |
 | `hiller2024` | *B. subtilis* BMV9 surfactin in 30 L fed-batch: six growth-rate-controlling feed rates (0.075–0.4 h⁻¹) in duplicate, plus a batch process | 13 | Hiller E et al. (2024) Microb Cell Fact 23:260. [doi:10.1186/s12934-024-02531-w](https://doi.org/10.1186/s12934-024-02531-w) | CC BY 4.0 |
 | `uhlendorff2026_cho` | CHO-K1 batch and fed-batch with inline turbidity, permittivity, DO and CO2: agitation/aeration, seeding, glutamine, medium, impeller position, feeding | 24 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.20829178](https://doi.org/10.5281/zenodo.20829178) | CC BY 4.0 |
 
@@ -71,6 +72,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 - A 3 h pre-culture lowers peak viable cell density by 37–41% in both strains, compared with a 24 h pre-culture.
 - In CHO DG44, glucose overfeeding raises cell-specific antibody productivity by 45% and titer by 20%, and CO2 limitation raises productivity by 21%, matching the original paper. The glutamate (low-glutamine) arms double productivity and enlarge the cells while peak density falls by three quarters.
 - In CHO-K1 (TCX6D medium), lowering the bottom impeller doubles peak viable cell density (+102%, p = 0.006).
+- In NISTCHO, adding galactose to the feed roughly doubles product galactosylation (index 0.22 → 0.46–0.51) and cuts the G0F share from 56% to about 30%, in all three galactose arms. On the standard feed it does this with no titer penalty (−4%, p = 0.48), while lowering glucose costs 58% of the titer.
 - In *B. subtilis*, surfactin titer traces a clear optimum against the feed rate, peaking at 36 g/L at µ = 0.25 h⁻¹ (+82% against µ = 0.075) and falling away on both sides; feeding for µ = 0.4 h⁻¹ leaves 49 g/L of glucose unconsumed. Both match the original study.
 - In *K. phaffii*, oxygen-limited (hypoxic) fed-batch raises final lipase activity by 75–153% against matched normoxic runs, for all three products and at every growth rate tested, as the original study reports.
 - All Keio knockouts show a similar −9 to −14% shift in peak acetate. A shift this uniform probably comes from the shared background or the plate rather than from the individual genes; treat it as a caveat.
@@ -80,7 +82,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 ```bash
 pip install -r requirements.txt
 python -m atlas.build          # rebuilds release/ from data/raw/
-python tests/test_atlas.py     # 28 checks, including known biology
+python tests/test_atlas.py     # 31 checks, including known biology
 ```
 
 ```python
@@ -99,7 +101,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). In short: unchanged files plus a README 
 
 | phase | goal | gate |
 |---|---|---|
-| 0 · Seed (now) | schema, build, tests, 7 measured datasets incl. CHO, *Pichia* and a 30 L dose series | engine reproduces published values |
+| 0 · Seed (now) | schema, build, tests, 8 measured datasets incl. CHO with product quality, *Pichia* and a 30 L dose series | engine reproduces published values |
 | 1 · Aggregate | 20–50 open datasets, 6+ organisms, field names mapped to the PREFER ontology | 200+ runs |
 | 2 · Generate | designed campaign on 24–48 parallel mini-bioreactors, with the parent strain in every plate column | batch effect smaller than the biological effects |
 | 3 · Scale and model | partner labs, graded process doses, a virtual bioreactor tested on held-out perturbations | |
