@@ -55,7 +55,7 @@ def main():
                             if r in pheno.index and pd.notna(pheno.at[r, row.phenotype])]
         out.append(dict(campaign=CAMPAIGN_NAMES.get(row.campaign, row.campaign), perturbation=row.perturbation,
                         type=row.perturbation_type, phenotype=row.phenotype, unit=row.unit, mean=num(row.mean),
-                        ref=num(row.ref_mean), pct=num(row.pct_change), d=num(row.effect_size_d), p=num(row.p_welch),
+                        ref=num(row.ref_mean), pct=num(row.pct_change), d=num(row.effect_size_d), p=num(row.p_welch), q=num(row.q_bh),
                         n=int(row.n), rn=int(row.ref_n), a=vals(a), b=vals(b)))
     data = dict(
         manifest=dict(version=man["schema_version"], datasets=man["datasets"], runs=man["runs"],

@@ -184,7 +184,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: grid; gap: 6px; borde
   <p>Each cell is one perturbation against its reference. Colour is the effect size (difference over pooled SD); the label is the % change. Select a cell to see the individual bioreactors.</p>
   <div class="toolbar">
     <label for="camp" class="muted">Campaign</label><select id="camp"></select>
-    <div class="scale"><span>lower</span><span class="bar" id="scalebar"></span><span>higher</span><span>· • p &lt; 0.05 · grey = n &lt; 2 per arm</span></div>
+    <div class="scale"><span>lower</span><span class="bar" id="scalebar"></span><span>higher</span><span>· • q &lt; 0.05 (FDR, within campaign) · grey = n &lt; 2 per arm</span></div>
   </div>
   <div class="panel scroll"><table class="heat" id="heat"></table></div>
   <div class="detail panel" id="detail"></div>
@@ -387,6 +387,7 @@ function renderStep() {
       <div class="stat"><b>${fmt(r.pct, 0)} %</b><span>change vs reference</span></div>
       <div class="stat"><b>${fmt(r.d, 1)}</b><span>effect size d</span></div>
       <div class="stat"><b>${r.p == null ? '–' : r.p < 0.001 ? '< 0.001' : r.p.toFixed(3)}</b><span>Welch p</span></div>
+      <div class="stat"><b>${r.q == null ? '–' : r.q < 0.001 ? '< 0.001' : r.q.toFixed(3)}</b><span>q (FDR)</span></div>
       <div class="stat"><b>${r.n} vs ${r.rn}</b><span>bioreactors per arm</span></div></div>`;
     dotPlot($('#c1'), [{name: refName, vals: r.b.map(x => x[1]), color: rc}, {name: pertName, vals: r.a.map(x => x[1]), color: pc}], ex.phunit, ex.phlabel);
   } else {
@@ -411,9 +412,9 @@ function renderHeat() {
   const body = perts.map(pt => `<tr><td class="rowh">${pt}</td>${phs.map(p => { const r = rows.find(x => x.perturbation === pt && x.phenotype === p);
     if (!r) return '<td></td>';
     const lab = (r.pct == null ? '–' : Math.abs(r.pct) >= 1000 && r.ref ? '×' + fmt(r.mean / r.ref, 0)
-                 : (r.pct > 0 ? '+' : '') + fmt(r.pct, 0) + '%') + (r.p != null && r.p < 0.05 ? ' •' : '');
+                 : (r.pct > 0 ? '+' : '') + fmt(r.pct, 0) + '%') + (r.q != null && r.q < 0.05 ? ' •' : '');
     const dark = r.d != null && Math.abs(r.d) > 3;
-    return `<td class="cell" tabindex="0" data-k="${pt}|${p}" style="background:${cellBg(r.d)};color:${dark ? 'var(--panel)' : 'var(--ink)'}" title="d = ${fmt(r.d,2)}, p = ${r.p == null ? '–' : fmt(r.p,3)}">${lab}</td>`; }).join('')}</tr>`).join('');
+    return `<td class="cell" tabindex="0" data-k="${pt}|${p}" style="background:${cellBg(r.d)};color:${dark ? 'var(--panel)' : 'var(--ink)'}" title="d = ${fmt(r.d,2)}, p = ${r.p == null ? '–' : fmt(r.p,3)}, q = ${r.q == null ? '–' : fmt(r.q,3)}">${lab}</td>`; }).join('')}</tr>`).join('');
   $('#heat').innerHTML = head + '<tbody>' + body + '</tbody>';
   $('#heat').querySelectorAll('td.cell').forEach(td => { const go = () => showCell(c, td.dataset.k); td.addEventListener('click', go); td.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
   const first = rows.slice().sort((a, b) => (a.p ?? 1) - (b.p ?? 1))[0];
@@ -422,7 +423,7 @@ function renderHeat() {
 function showCell(c, k) {
   const [pt, p] = k.split('|'); const r = D.effects.find(x => x.campaign === c && x.perturbation === pt && x.phenotype === p);
   $('#heat').querySelectorAll('td.cell').forEach(td => td.classList.toggle('sel', td.dataset.k === k));
-  $('#detail').innerHTML = `<h3>${pt} · ${p}</h3><p class="muted">${M.phenotypes[p].description}. ${r.n} vs ${r.rn} bioreactors · ${r.pct == null ? '' : (Math.abs(r.pct) >= 1000 && r.ref ? '×' + fmt(r.mean / r.ref, 0) : (r.pct > 0 ? '+' : '') + fmt(r.pct, 0) + '%') + ' · '}d = ${fmt(r.d, 2)} · p = ${r.p == null ? '– (needs 2 per arm)' : r.p < 0.001 ? '< 0.001' : r.p.toFixed(3)}</p><div class="chart" id="cd"></div>`;
+  $('#detail').innerHTML = `<h3>${pt} · ${p}</h3><p class="muted">${M.phenotypes[p].description}. ${r.n} vs ${r.rn} bioreactors · ${r.pct == null ? '' : (Math.abs(r.pct) >= 1000 && r.ref ? '×' + fmt(r.mean / r.ref, 0) : (r.pct > 0 ? '+' : '') + fmt(r.pct, 0) + '%') + ' · '}d = ${fmt(r.d, 2)} · p = ${r.p == null ? '– (needs 2 per arm)' : r.p < 0.001 ? '< 0.001' : r.p.toFixed(3)}${r.q == null ? '' : ' · q = ' + (r.q < 0.001 ? '< 0.001' : r.q.toFixed(3))}</p><div class="chart" id="cd"></div>`;
   dotPlot($('#cd'), [{name:'reference', vals:r.b.map(x => x[1]), color:'var(--accent)'}, {name:pt.length > 22 ? pt.slice(0, 21) + '…' : pt, vals:r.a.map(x => x[1]), color:'var(--pert)'}], r.unit, `${pt} ${p}`);
 }
 $('#camp').addEventListener('change', renderHeat);

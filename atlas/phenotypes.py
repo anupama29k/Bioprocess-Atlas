@@ -248,4 +248,32 @@ def effects(runs: pd.DataFrame, pheno: pd.DataFrame, contrasts=None) -> pd.DataF
               "reference": b_df.condition.iloc[0], "perturbation_type": c["perturbation_type"],
               "perturbation": c["perturbation"], "dose": c.get("dose", np.nan)}, a_df, b_df,
              only=c.get("phenotypes"), exclude=c.get("exclude_phenotypes", ()))
-    return pd.DataFrame(rows)
+    out = pd.DataFrame(rows)
+    return _add_fdr(out) if len(out) else out
+
+
+def _add_fdr(eff: pd.DataFrame) -> pd.DataFrame:
+    """Benjamini-Hochberg false-discovery rate, computed within each campaign.
+
+    A campaign is one study's set of comparisons against a shared reference, which is
+    the family a reader actually scans ("which effects in this screen are real?").
+    Correcting across the whole atlas instead would pool unrelated studies; that figure
+    is quoted in the README rather than stored here. Rows without a p-value get no q.
+    """
+    eff = eff.copy()
+    eff["q_bh"] = np.nan
+    for camp, g in eff.groupby("campaign"):
+        m = g.p_welch.notna()
+        if not m.any():
+            continue
+        p = g.loc[m, "p_welch"].to_numpy(float)
+        order = np.argsort(p)
+        n = len(p)
+        q = np.empty(n)
+        # step-up: q_(i) = min over j >= i of (n/j) * p_(j), then clipped to 1
+        running = 1.0
+        for k in range(n - 1, -1, -1):
+            running = min(running, n / (k + 1) * p[order[k]])
+            q[order[k]] = min(running, 1.0)
+        eff.loc[g.index[m], "q_bh"] = q
+    return eff

@@ -14,7 +14,8 @@
 
 Open upstream bioprocess data is scarce. The largest public benchmark is simulated, and real industrial datasets usually keep only harvest-day values. Single-cell biology fixed this with perturbation atlases. The Bioprocess Atlas applies the same idea to bioreactors:
 
-- **Compare.** Every perturbation is measured against its own reference, ideally reactors run on the same day, and every number carries replicate statistics (Welch t-test, effect size d). Arms with a single run report the difference only.
+- **Compare.** Every perturbation is measured against its own reference, ideally reactors run on the same day, and every number carries replicate statistics: Welch t-test, effect size d, and a Benjamini-Hochberg false-discovery q computed within each campaign. Arms with a single run report the difference only.
+  - **Read q, not p.** The release contains 211 tests; 78 reach p < 0.05 but only 51 survive at q < 0.05, and roughly 11 of the 78 would be expected by chance alone. With 2–4 vessels per arm the p-value is a weak instrument: where the effect size is large and the direction matches known biology, d carries the claim.
 - **Reproduce.** Every table is rebuilt from the unchanged published files with one command. Each release is stamped with a checksum and the version of the analysis engine.
 - **Model.** Set points become doses (°C, vvm, °P, feed rate). This is the bioprocess version of graded genetic perturbations, and it is the training data a virtual bioreactor needs.
 
@@ -46,7 +47,7 @@ published studies ──► data/raw/<dataset>/       unchanged files + README (
 | `runs.csv` | bioreactor run | run_id, dataset_id, organism, strain, condition, perturbation_type, dose, reference_condition, vessel, working_volume_L |
 | `observations.csv.gz` | measurement | run_id, time_h, variable, value |
 | `phenotypes.csv` | run × phenotype | run_id, phenotype, value, confounded_by_feed |
-| `effects.csv` | perturbation × phenotype | mean, ref_mean, pct_change, effect_size_d, p_welch, n, ref_n |
+| `effects.csv` | perturbation × phenotype | mean, ref_mean, pct_change, effect_size_d, p_welch, **q_bh** (FDR within campaign), n, ref_n |
 | `contrasts.csv` | designed comparison | dataset_id, label, perturbed condition, reference condition |
 | `manifest.json` | release | schema_version, counts, vocabulary, phenotype definitions, checksum, engine |
 
@@ -70,11 +71,11 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 
 ### Example findings
 
-- The *E. coli* ΔaceA strain reconsumes 5% of its acetate after glucose runs out, against 78% for the parent (p = 0.015, d = −5.6). This is the expected loss of the glyoxylate shunt.
-- The ale yeast W-68 reaches a 68% lower peak viable cell density at 37 °C than at 22 °C (p = 0.027), and its viability falls to 26% against 90%. The lager strain W-34/70 is unaffected (+1%).
-- A 3 h pre-culture lowers peak viable cell density by 37–41% in both strains, compared with a 24 h pre-culture.
+- The *E. coli* ΔaceA strain reconsumes 5% of its acetate after glucose runs out, against 78% for the parent (d = −5.6; p = 0.015, q = 0.20 across the 59 tests in that screen). The effect is the expected loss of the glyoxylate shunt and is enormous, but with three vessels per arm it does not survive multiple-testing correction on its own.
+- The ale yeast W-68 reaches a 68% lower peak viable cell density at 37 °C than at 22 °C (d = −20.5; p = 0.027, q = 0.062), and its viability falls to 26% against 90%. The lager strain W-34/70 is unaffected (+1%).
+- A 3 h pre-culture lowers peak viable cell density by 37–41% in both strains, compared with a 24 h pre-culture (q < 0.001).
 - In CHO DG44, glucose overfeeding raises cell-specific antibody productivity by 45% and titer by 20%, and CO2 limitation raises productivity by 21%, matching the original paper. The glutamate (low-glutamine) arms double productivity and enlarge the cells while peak density falls by three quarters.
-- In CHO-K1 (TCX6D medium), lowering the bottom impeller doubles peak viable cell density (+102%, p = 0.006).
+- In CHO-K1 (TCX6D medium), lowering the bottom impeller doubles peak viable cell density (+102%, q = 0.027).
 - In NISTCHO, adding galactose to the feed roughly doubles product galactosylation (index 0.22 → 0.46–0.51) and cuts the G0F share from 56% to about 30%, in all three galactose arms. On the standard feed it does this with no titer penalty (−4%, p = 0.48), while lowering glucose costs 58% of the titer.
 - In *B. subtilis*, surfactin titer traces a clear optimum against the feed rate, peaking at 36 g/L at µ = 0.25 h⁻¹ (+82% against µ = 0.075) and falling away on both sides; feeding for µ = 0.4 h⁻¹ leaves 49 g/L of glucose unconsumed. Both match the original study.
 - In *K. phaffii*, oxygen-limited (hypoxic) fed-batch raises final lipase activity by 75–153% against matched normoxic runs, for all three products and at every growth rate tested, as the original study reports.
@@ -85,7 +86,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 ```bash
 pip install -r requirements.txt
 python -m atlas.build          # rebuilds release/ from data/raw/
-python tests/test_atlas.py     # 32 checks, including known biology
+python tests/test_atlas.py     # 33 checks, including known biology
 ```
 
 ```python

@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory() as d:
           set(k[k.perturbation.isin(["glutamine 6 vs 8 mM", "seeding 6e5 vs 4e5 cells/mL"])].phenotype) == {"mu_batch_h"})
     imp = k[(k.perturbation == "lowered impeller (batch)") & (k.phenotype == "vcd_max_1e6_mL")].iloc[0]
     check("CHO-K1: lowered bottom impeller doubles peak VCD in TCX6D batch",
-          imp["pct_change"] > 50 and imp.p_welch < 0.05, f"{imp['pct_change']:+.0f} %, p = {imp.p_welch:.3f}")
+          imp["pct_change"] > 50 and imp.q_bh < 0.05, f"{imp['pct_change']:+.0f} %, q = {imp.q_bh:.3f}")
     m = runs.merge(ph, on="run_id")
     hans = m[m.dataset_id == "hans2020"]
     check("glucose depletion found in the batch phase for every Hans run",
@@ -49,18 +49,22 @@ with tempfile.TemporaryDirectory() as d:
     check("ΔaceA (no glyoxylate shunt) barely reconsumes acetate vs parent", aceA < 0.2 and par > 0.5,
           f"{aceA:.2f} vs {par:.2f}")
     e = eff[(eff.perturbation == "ΔaceA") & (eff.phenotype == "acetate_reconsumed_frac")].iloc[0]
-    check("ΔaceA acetate effect is large", e.effect_size_d < -3, f"d = {e.effect_size_d:.1f}, p = {e.p_welch:.2f}")
+    check("ΔaceA acetate effect is large", e.effect_size_d < -3,
+          f"d = {e.effect_size_d:.1f}, p = {e.p_welch:.3f}, q = {e.q_bh:.3f} (n = 3 per arm: the "
+          "effect size carries this, not the p-value)")
     y = eff[eff.campaign == "uhlendorff2026 · W-68"]
     t37 = y[(y.perturbation.str.startswith("37")) & (y.phenotype == "vcd_max_1e6_mL")].iloc[0]
     check("S. cerevisiae W-68 at 37 °C reaches far fewer cells than same-day 22 °C controls",
-          t37["pct_change"] < -50 and t37.p_welch < 0.05, f"{t37['pct_change']:.0f} %, p = {t37.p_welch:.3f}")
+          t37["pct_change"] < -50 and t37.effect_size_d < -5,
+          f"{t37['pct_change']:.0f} %, d = {t37.effect_size_d:.1f}, p = {t37.p_welch:.3f}, q = {t37.q_bh:.3f}")
     l37 = eff[(eff.campaign == "uhlendorff2026 · W-34/70") & eff.perturbation.str.startswith("37")
               & (eff.phenotype == "vcd_max_1e6_mL")].iloc[0]
     check("lager strain W-34/70 keeps its peak cell density at 37 °C", abs(l37["pct_change"]) < 10,
           f"{l37['pct_change']:+.0f} %")
     pre = eff[(eff.perturbation == "3 h vs 24 h pre-culture") & (eff.phenotype == "vcd_max_1e6_mL")]
     check("short 3 h pre-culture lowers peak VCD in both strains",
-          (pre["pct_change"] < -30).all() and (pre.p_welch < 0.01).all(), ", ".join(f"{v:.0f} %" for v in pre["pct_change"]))
+          (pre["pct_change"] < -30).all() and (pre.q_bh < 0.01).all(),
+          ", ".join(f"{v:.0f} %" for v in pre["pct_change"]) + f", q <= {pre.q_bh.max():.4f}")
     c = eff[eff.campaign.str.startswith("schellenberg2021")].set_index(["perturbation", "phenotype"])
     qp = lambda p: c.loc[(p, "qp_pg_cell_day"), "pct_change"]
     check("CHO: glucose overfeeding raises IgG titer and cell-specific productivity (paper's finding)",
@@ -105,6 +109,12 @@ with tempfile.TemporaryDirectory() as d:
           len(cont) >= 1 and cp[list(BATCH_ONLY)].isna().all().all()
           and eff[eff.campaign == "calzadilla2023"].empty,
           f"{len(cont)} continuous run(s)")
+    hasp = eff[eff.p_welch.notna()]
+    check("every p-value carries a within-campaign FDR-corrected q, and q >= p",
+          hasp.q_bh.notna().all() and (hasp.q_bh >= hasp.p_welch - 1e-12).all()
+          and eff[eff.p_welch.isna()].q_bh.isna().all(),
+          f"{len(hasp)} tests, {(hasp.p_welch < 0.05).sum()} with p < 0.05, "
+          f"{(hasp.q_bh < 0.05).sum()} surviving at q < 0.05")
     check("feed-dependent phenotypes are flagged, except where the feed is itself the perturbation",
           fb[fb.perturbation_type != "feed"].confounded_by_feed.all()
           and not fb[fb.perturbation_type == "feed"].confounded_by_feed.any())

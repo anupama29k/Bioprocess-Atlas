@@ -66,7 +66,7 @@ Phenotypes are computed only from phases in which the compared runs experienced 
 
 ### Effects and replicate statistics
 
-For each comparison, the perturbed and reference arms are summarised by mean, standard deviation and n; the difference, the percentage change, the standardised effect size and a Welch two-sample t-test are reported. Effect size and p-value require at least two runs per arm; where an arm has a single vessel, the difference is reported and the inferential fields are left empty rather than filled with a value the design cannot support. Of 365 effect rows in v0.4.0, 211 carry a p-value.
+For each comparison, the perturbed and reference arms are summarised by mean, standard deviation and n; the difference, the percentage change, the standardised effect size and a Welch two-sample t-test are reported, together with a Benjamini-Hochberg false-discovery rate (`q_bh`) computed **within each campaign**, that being the family of tests a reader actually scans when asking which effects in a given screen are real. Effect size and p-value require at least two runs per arm; where an arm has a single vessel, the difference is reported and the inferential fields are left empty rather than filled with a value the design cannot support. Of 365 effect rows, 211 carry a p-value. Seventy-eight of these fall below p = 0.05, but only fifty-one survive at q = 0.05, and roughly eleven of the seventy-eight would be expected by chance alone. This is reported prominently rather than buried: with two to four vessels per arm, the p-value is a weak instrument, and several effects that are large, reproducible and consistent with established biology nonetheless fail correction. The ΔaceA acetate-reconsumption result is the clearest case: the effect size is d = −5.6 and the underlying biochemistry is not in doubt, yet with three vessels per arm it reaches only p = 0.015, which becomes q = 0.20 among the fifty-nine tests of that screen. Users are directed to read effect sizes alongside q, and not to filter on p alone.
 
 Two features of the effect model deserve note.
 
@@ -89,7 +89,7 @@ The release is archived at Zenodo (doi:10.5281/zenodo.24125547, which always res
 | `runs.csv` | bioreactor run | run_id, dataset_id, organism, strain, mode, vessel, working_volume_L, medium, temperature_C, pH_setpoint, replicate, campaign, condition, reference_condition, perturbation_type, perturbation, perturbation_dose, source_doi, license, notes |
 | `observations.csv.gz` | measurement | run_id, time_h, variable, value |
 | `phenotypes.csv` | run | run_id and 28 phenotype columns |
-| `effects.csv` | perturbation × phenotype | campaign, condition, reference, perturbation_type, perturbation, dose, phenotype, unit, mean, sd, n, ref_mean, ref_sd, ref_n, difference, pct_change, effect_size_d, p_welch, confounded_by_feed |
+| `effects.csv` | perturbation × phenotype | campaign, condition, reference, perturbation_type, perturbation, dose, phenotype, unit, mean, sd, n, ref_mean, ref_sd, ref_n, difference, pct_change, effect_size_d, p_welch, q_bh, confounded_by_feed |
 | `contrasts.csv` | designed comparison | campaign, perturbation_type, perturbation, dose, dataset_id, runs, reference_runs, phenotype scoping |
 | `manifest.json` | release | schema_version, counts, variable and phenotype definitions, organisms, engine, observations checksum |
 
@@ -111,12 +111,12 @@ The release is archived at Zenodo (doi:10.5281/zenodo.24125547, which always res
 
 ## Technical Validation
 
-The atlas is validated by requiring that it reproduce, from the raw files and through the common pipeline, the principal finding that each source study reported independently. Thirty-two automated checks run on every build; the build fails if any does not pass.
+The atlas is validated by requiring that it reproduce, from the raw files and through the common pipeline, the principal finding that each source study reported independently. Thirty-three automated checks run on every build; the build fails if any does not pass.
 
 | Source study | Finding reported by the authors | Recovered by the atlas |
 |---|---|---|
-| Hans 2020 | loss of isocitrate lyase (Δ*aceA*) removes the glyoxylate shunt, so acetate cannot be reconsumed | 5% of peak acetate reconsumed against 78% for the parent (p = 0.015, d = −5.6) |
-| Uhlendorff 2026 | the ale strain fails at elevated temperature while the lager strain does not | W-68 peak viable cell density 68% lower at 37 °C than same-day 22 °C controls (p = 0.027), viability 26% against 90%; W-34/70 unaffected (+1%) |
+| Hans 2020 | loss of isocitrate lyase (Δ*aceA*) removes the glyoxylate shunt, so acetate cannot be reconsumed | 5% of peak acetate reconsumed against 78% for the parent (d = −5.6; p = 0.015, q = 0.20) |
+| Uhlendorff 2026 | the ale strain fails at elevated temperature while the lager strain does not | W-68 peak viable cell density 68% lower at 37 °C than same-day 22 °C controls (d = −20.5; p = 0.027, q = 0.062), viability 26% against 90%; W-34/70 unaffected (+1%) |
 | Schellenberg 2021 | glucose overfeeding and CO₂ limitation raise cell-specific antibody productivity | qP +45% and titer +20% under overfeeding; qP +21% under CO₂ limitation |
 | Sales-Vallverdú 2024 | oxygen limitation improves recombinant protein production | final lipase activity 75–153% higher than matched normoxic runs, in all five comparisons across three products and four growth rates |
 | Hiller 2024 | surfactin titer is maximal at a feed set for µ = 0.25 h⁻¹; higher feed rates accumulate glucose and acetate | maximum of the series at µ = 0.25 h⁻¹, 36.0 g/L; 49 g/L residual glucose at µ = 0.4 h⁻¹; end acetate 2.9–3.0 g/L at the two highest rates against 0.03 g/L at the lowest |
@@ -145,6 +145,8 @@ Several conventions should be observed when using the data.
 **Check `confounded_by_feed` before interpreting an effect**, and note that it is deliberately not set where the feed is the perturbation.
 
 **Do not compare product measurements across products.** Enzyme activity is reported in assay units that differ per enzyme, under the variable `product_activity_AU_mL`, and is comparable only within one product.
+
+**Filter on `q_bh`, not on `p_welch`, and read the effect size.** The release reports 211 tests; filtering on p < 0.05 alone collects an expected eleven false positives. Conversely, a large and mechanistically expected effect may fail correction simply because the design has three vessels per arm, so a non-significant q is not evidence of absence.
 
 **Prefer effect sizes to percentage changes when a reference value is near zero.** Several residual-substrate comparisons produce very large percentages that are arithmetically correct but not informative.
 
