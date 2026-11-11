@@ -51,7 +51,7 @@ VARIABLES = {
     "cell_diameter_um": ("µm", "mean diameter of viable cells"),
     "arabitol_gL":     ("g/L", "arabitol in broth"),
     "ammonium_gL":     ("g/L", "ammonium in broth (mass basis, as reported)"),
-    "galactosylation_index": ("galactoses/glycan", "mean galactose residues per N-glycan on the product (0–2)"),
+    "galactosylation_percent": ("%", "galactosylation index: galactose residues as a share of possible galactosylation sites on the product N-glycans (Schäpertöns et al. 2026, Eq. 7)"),
     "afucosylation_percent": ("%", "N-glycans on the product lacking core fucose"),
     "g0f_percent":     ("%", "share of the product carrying G0F on both heavy chains"),
     "dilution_rate_h": ("1/h", "dilution rate of a continuous culture (feed rate ÷ working volume)"),

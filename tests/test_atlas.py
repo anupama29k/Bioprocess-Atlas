@@ -91,10 +91,15 @@ with tempfile.TemporaryDirectory() as d:
     gal = [p for p in nist.index.get_level_values(0).unique() if "galactose" in p]
     check("NISTCHO: every galactose-supplemented feed raises galactosylation and lowers G0F (paper's finding)",
           len(gal) == 2
-          and all(nist.loc[(p, "galactosylation_end_idx"), "pct_change"] > 50 for p in gal)
+          and all(nist.loc[(p, "galactosylation_end_pct"), "pct_change"] > 50 for p in gal)
           and all(nist.loc[(p, "g0f_end_pct"), "pct_change"] < -20 for p in gal)
-          and all(nist.loc[(p, "galactosylation_end_idx"), "p_welch"] < 0.01 for p in gal),
-          ", ".join(f"{p}: galactosylation {nist.loc[(p, 'galactosylation_end_idx'), 'pct_change']:+.0f} %" for p in gal))
+          and all(nist.loc[(p, "galactosylation_end_pct"), "p_welch"] < 0.01 for p in gal),
+          ", ".join(f"{p}: galactosylation {nist.loc[(p, 'galactosylation_end_pct'), 'pct_change']:+.0f} %" for p in gal))
+    gal_runs = runs[runs.condition.str.endswith("+") & (runs.dataset_id == "schapertoens2026")].run_id
+    gal_end = obs[(obs.variable == "galactosylation_percent") & (obs.time_h > 120)
+                  & obs.run_id.isin(gal_runs)].value.mean()
+    check("NISTCHO: the galactosylation index reproduces the paper's reported 24 % for Gal+ strategies",
+          23.0 <= gal_end <= 25.5, f"{gal_end:.1f} % (paper: 24 %)")
     check("NISTCHO: galactose on the standard feed costs no titer, while low glucose does",
           abs(nist.loc[("standard feed + galactose", "titer_final_gL"), "pct_change"]) < 15
           and nist.loc[("low glucose", "titer_final_gL"), "pct_change"] < -40,

@@ -15,7 +15,7 @@
     "Saccharomyces pastorianus"
   ],
   "perturbations": 31,
-  "observations_sha256_16": "f9c16ad0ff4e8879",
+  "observations_sha256_16": "24d20e2f98697fc4",
   "engine": "bioprocessanalyzer@2439bf9",
   "variables": {
     "od600": {
@@ -134,9 +134,9 @@
       "unit": "g/L",
       "description": "ammonium in broth (mass basis, as reported)"
     },
-    "galactosylation_index": {
-      "unit": "galactoses/glycan",
-      "description": "mean galactose residues per N-glycan on the product (0–2)"
+    "galactosylation_percent": {
+      "unit": "%",
+      "description": "galactosylation index: galactose residues as a share of possible galactosylation sites on the product N-glycans (Schäpertöns et al. 2026, Eq. 7)"
     },
     "afucosylation_percent": {
       "unit": "%",
@@ -246,9 +246,9 @@
       "description": "product titer ÷ biomass at the last sample",
       "confounded_by_feed": false
     },
-    "galactosylation_end_idx": {
-      "unit": "galactoses/glycan",
-      "description": "mean galactose per N-glycan at the last sample (product quality)",
+    "galactosylation_end_pct": {
+      "unit": "%",
+      "description": "galactosylation index at the last sample (product quality)",
       "confounded_by_feed": false
     },
     "afucosylation_end_pct": {

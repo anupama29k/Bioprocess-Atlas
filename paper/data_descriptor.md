@@ -56,7 +56,7 @@ One ingester function per dataset converts its files into runs, observations and
 
 Four tables are keyed by `run_id`. A **run** is one vessel: it records organism, strain, mode, vessel, working volume, medium, temperature and pH set points, replicate number, campaign, condition, reference condition, perturbation type, perturbation and dose. An **observation** is a single measurement: run, time in hours, variable, value. A **phenotype** is a derived quantity for one run. An **effect** is one perturbation against its reference for one phenotype.
 
-Units are carried by the variable name — `glucose_gL`, `DO_percent`, `vcd_cells_mL` — rather than in a separate column, so values are directly comparable across datasets without unit reconciliation at analysis time. The build rejects any variable outside the vocabulary, which prevents silent divergence as datasets accumulate. Release v0.5.0 defines 34 variables, of which 33 are populated, from standard process measurements (biomass, substrates, byproducts, dissolved oxygen, pH, off-gas) through inline sensor channels (permittivity, dissolved carbon dioxide, turbidity) to product measurements (titer, enzyme activity) and product-quality attributes (galactosylation index, afucosylation, G0F share).
+Units are carried by the variable name — `glucose_gL`, `DO_percent`, `vcd_cells_mL` — rather than in a separate column, so values are directly comparable across datasets without unit reconciliation at analysis time. The build rejects any variable outside the vocabulary, which prevents silent divergence as datasets accumulate. Release v0.5.0 defines 34 variables, of which 33 are populated, from standard process measurements (biomass, substrates, byproducts, dissolved oxygen, pH, off-gas) through inline sensor channels (permittivity, dissolved carbon dioxide, turbidity) to product measurements (titer, enzyme activity) and product-quality attributes (galactosylation index computed by the source study's own formula, afucosylation, G0F share).
 
 ### Phenotypes
 
@@ -111,7 +111,7 @@ The release is archived at Zenodo (doi:10.5281/zenodo.24125547, which always res
 
 ## Technical Validation
 
-The atlas is validated by requiring that it reproduce, from the raw files and through the common pipeline, the principal finding that each source study reported independently. Thirty-three automated checks run on every build; the build fails if any does not pass.
+The atlas is validated by requiring that it reproduce, from the raw files and through the common pipeline, the principal finding that each source study reported independently. Thirty-four automated checks run on every build; the build fails if any does not pass.
 
 | Source study | Finding reported by the authors | Recovered by the atlas |
 |---|---|---|
@@ -120,7 +120,7 @@ The atlas is validated by requiring that it reproduce, from the raw files and th
 | Schellenberg 2021 | glucose overfeeding and CO₂ limitation raise cell-specific antibody productivity | qP +45% and titer +20% under overfeeding; qP +21% under CO₂ limitation |
 | Sales-Vallverdú 2024 | oxygen limitation improves recombinant protein production | final lipase activity 75–153% higher than matched normoxic runs, in all five comparisons across three products and four growth rates |
 | Hiller 2024 | surfactin titer is maximal at a feed set for µ = 0.25 h⁻¹; higher feed rates accumulate glucose and acetate | maximum of the series at µ = 0.25 h⁻¹, 36.0 g/L; 49 g/L residual glucose at µ = 0.4 h⁻¹; end acetate 2.9–3.0 g/L at the two highest rates against 0.03 g/L at the lowest |
-| Schäpertöns 2026 | galactose supplementation shifts N-glycosylation | galactosylation index 0.22 → 0.46–0.51 and G0F share 56% → ~30% in all three galactose arms (p < 0.001), with no titer penalty on the standard feed (−4%, p = 0.48) |
+| Schäpertöns 2026 | galactose supplementation shifts N-glycosylation | galactosylation index 11–15% → 23–25% of possible sites and G0F share ~55% → ~30% in all three galactose arms (q < 0.001); the index reproduces the 24% the authors report, with no titer penalty on the standard feed (−4%, p = 0.48) |
 
 Validation additionally uses negative controls that the designs supply. In the *B. subtilis* feed-rate series the feed begins only after a batch phase common to all arms, so batch-phase growth rate should not track the feed set point; across the five comparisons the median absolute change is 4.5%, against changes of 80–385% in the fed-batch growth rate. Independent published values are reproduced where available: for the *E. coli* batch cultivation the engine returns µ = 0.768 h⁻¹ against 0.71 h⁻¹ reported, and 0.74 h⁻¹ when computed from the carbon dioxide evolution rate. Cell-specific productivities fall between 13 and 36 pg/cell/day, within the range expected of an industrial antibody-producing line.
 

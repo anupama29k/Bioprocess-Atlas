@@ -76,7 +76,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 - A 3 h pre-culture lowers peak viable cell density by 37–41% in both strains, compared with a 24 h pre-culture (q < 0.001).
 - In CHO DG44, glucose overfeeding raises cell-specific antibody productivity by 45% and titer by 20%, and CO2 limitation raises productivity by 21%, matching the original paper. The glutamate (low-glutamine) arms double productivity and enlarge the cells while peak density falls by three quarters.
 - In CHO-K1 (TCX6D medium), lowering the bottom impeller doubles peak viable cell density (+102%, q = 0.027).
-- In NISTCHO, adding galactose to the feed roughly doubles product galactosylation (index 0.22 → 0.46–0.51) and cuts the G0F share from 56% to about 30%, in all three galactose arms. On the standard feed it does this with no titer penalty (−4%, p = 0.48), while lowering glucose costs 58% of the titer.
+- In NISTCHO, adding galactose to the feed roughly doubles the product's galactosylation index (11–15% → 23–25% of possible sites occupied, matching the 24% the original study reports) and cuts the G0F share from about 55% to about 30%, in all three galactose arms. On the standard feed it does this with no titer penalty (−4%, p = 0.48), while lowering glucose costs 58% of the titer.
 - In *B. subtilis*, surfactin titer traces a clear optimum against the feed rate, peaking at 36 g/L at µ = 0.25 h⁻¹ (+82% against µ = 0.075) and falling away on both sides; feeding for µ = 0.4 h⁻¹ leaves 49 g/L of glucose unconsumed. Both match the original study.
 - In *K. phaffii*, oxygen-limited (hypoxic) fed-batch raises final lipase activity by 75–153% against matched normoxic runs, for all three products and at every growth rate tested, as the original study reports.
 - All Keio knockouts show a similar −9 to −14% shift in peak acetate. A shift this uniform probably comes from the shared background or the plate rather than from the individual genes; treat it as a caveat.
@@ -86,7 +86,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 ```bash
 pip install -r requirements.txt
 python -m atlas.build          # rebuilds release/ from data/raw/
-python tests/test_atlas.py     # 33 checks, including known biology
+python tests/test_atlas.py     # 34 checks, including known biology
 ```
 
 ```python

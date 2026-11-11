@@ -35,15 +35,15 @@ In the source files the strategies are letter-coded: A = STD, B = STD+, C = LoG+
 
 This is the atlas's first dataset with product **quality** attributes, not just titer. The glycoform table reports pairs of glycans (both heavy chains), so the atlas derives three standard attributes from the complete pairs (HexNAc = 8), renormalised:
 
-- `galactosylation_index` — mean galactose residues per N-glycan, from the Hex count above the G0/G0 baseline of 6, halved to put it per glycan (0–2).
-- `afucosylation_percent` — share of glycans lacking core fucose, from the Fuc count.
-- `g0f_percent` — share of the product carrying G0F on both heavy chains.
+- `galactosylation_percent` — the galactosylation index as the study defines it (their Eq. 7): 100 × Σ(Aⱼ·gⱼ) / Σ(Aⱼ·dⱼ), where Aⱼ is the corrected fractional abundance of glycoform j, gⱼ its galactose residues and dⱼ its possible galactosylation sites. A biantennary glycan carries 3 core hexoses and has 2 galactosylation sites, so for a row covering n glycans (n = HexNAc/4), gⱼ = Hex − 3n and dⱼ = 2n. **This reproduces the paper's reported 24% for the galactose-supplemented strategies (atlas: 24.3%), which is the check that validates the derivation.**
+- `afucosylation_percent` — core fucose sites unoccupied, as a percentage, on the same basis.
+- `g0f_percent` — fractional abundance of the G0F·G0F glycoform.
 
 These are stored as observations at each sampling time, so each run's phenotype is the value at harvest.
 
 ## What the atlas finds
 
-Galactose supplementation roughly doubles galactosylation (index 0.22 → 0.46–0.51) and cuts the G0F share from 56 % to about 30 %, in all three galactose arms, with very tight replicates. Adding galactose to the standard feed does this without a titer penalty (−4 %, p = 0.48), whereas lowering glucose costs 58 % of the titer and 31 % of the integral viable cell density.
+Galactose supplementation roughly doubles the galactosylation index (11–15 % → 23–25 %) and cuts the G0F share from about 55 % to about 30 %, in all three galactose arms, with very tight replicates. Adding galactose to the standard feed does this without a titer penalty (−4 %, p = 0.48), whereas lowering glucose costs 58 % of the titer and 31 % of the integral viable cell density.
 
 ## Caveats
 
@@ -51,5 +51,5 @@ Galactose supplementation roughly doubles galactosylation (index 0.22 → 0.46�
 - **Harvest times differ.** The LoG and LoG+ runs end at about 245 h, the others at about 263–265 h, and the final glycan sample is at 240 h rather than 264 h for those arms. The titer comparison for LoG and LoG+ is therefore slightly against them, since they had about 20 h less to accumulate product.
 - Quality attributes exist at only two time points per run (about 120 h and harvest), so they are not a time course in the way the cell counts are.
 - Lactate is converted from mM to g/L at 90.08 g/mol. Titer is converted from µg/mL to g/L.
-- Incomplete glycoform pairs (HexNAc = 4, one glycan missing) are left out of the three derived attributes and the rest renormalised.
+- Incomplete glycoform pairs (HexNAc = 4, one glycan present) are included, weighted by the one glycan they represent, rather than discarded.
 - These are TubeSpin tubes, not instrumented bioreactors: there is no controlled pH or dissolved oxygen, and no inline data.

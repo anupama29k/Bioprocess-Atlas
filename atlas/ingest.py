@@ -515,25 +515,38 @@ def schapertoens2026() -> Dataset:
         ds.observations.append((rid(row.Condition, row.Replicate), float(row.Hour), "glucose_gL",
                                 float(getattr(row, "_4"))))
 
-    # Product N-glycans: one file per condition, replicate and sampling hour.
-    # Rows are glycoform pairs (both heavy chains); Hex 6 = G0/G0, each extra Hex is one galactose;
-    # Fuc counts core fucoses on the pair. Only complete pairs (HexNAc 8) are used, renormalised.
+    # Product N-glycans: one file per condition, replicate and sampling hour, as produced by
+    # CAFOG. Each row is a glycoform pair across the two heavy chains, with its corrected
+    # fractional abundance and the Fuc / Hex / HexNAc counts of the pair.
+    #
+    # A biantennary glycan at G0 carries 3 hexoses (core mannose), 4 HexNAc and 1 core fucose
+    # when fucosylated, and has 2 galactosylation sites. So for a row covering n glycans
+    # (n = HexNAc / 4): galactose residues = Hex - 3n, possible sites = 2n, fucosylation
+    # sites = n. Rows where one glycan is absent therefore contribute n = 1 rather than
+    # being discarded.
+    #
+    # The galactosylation index follows Schäpertöns et al. 2026, Eq. 7:
+    #     100 * sum(A_j * g_j) / sum(A_j * d_j)
+    # which reproduces their reported 24 % for the galactose-supplemented strategies.
     for f in sorted((D / "glyco").glob("*.csv")):
         c, rep, hour = f.stem.split("_")
         g = pd.read_csv(f)
-        g = g[g.HexNAc == 8].copy()
-        if g.empty:
-            continue
         ab = g.corr_abundance.fillna(g.abundance).astype(float)
-        tot = ab.sum()
-        if tot <= 0:
+        ok = g.HexNAc.notna() & g.Hex.notna()
+        if not ok.any() or ab[ok].sum() <= 0:
             continue
+        n_gly = g.HexNAc / 4.0                       # glycans represented by this row
+        gal_res = g.Hex - 3 * n_gly                  # galactose residues
+        gal_sites = 2 * n_gly                        # possible galactosylation sites
+        fuc_sites = n_gly                            # one core fucose site per glycan
         run, t = rid(c, rep), float(hour)
-        ds.observations.append((run, t, "galactosylation_index", float((ab * (g.Hex - 6)).sum() / tot / 2)))
+        ds.observations.append((run, t, "galactosylation_percent",
+                                float(100 * (ab[ok] * gal_res[ok]).sum() / (ab[ok] * gal_sites[ok]).sum())))
         ds.observations.append((run, t, "afucosylation_percent",
-                                float((ab * (2 - g.Fuc.fillna(0))).sum() / tot / 2 * 100)))
+                                float(100 * (ab[ok] * (fuc_sites[ok] - g.Fuc[ok].fillna(0))).sum()
+                                      / (ab[ok] * fuc_sites[ok]).sum())))
         g0f = ab[g.glycoform == "A2G0F/A2G0F"].sum()
-        ds.observations.append((run, t, "g0f_percent", float(g0f / tot * 100)))
+        ds.observations.append((run, t, "g0f_percent", float(100 * g0f / ab.sum())))
     return ds
 
 
