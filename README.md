@@ -1,5 +1,7 @@
 # Bioprocess Atlas
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24125547.svg)](https://doi.org/10.5281/zenodo.24125547)
+
 **Real fermentation and cell-culture runs from published studies, changed one factor at a time and reduced to the same set of phenotypes, so that the effect of a gene, a temperature, a feed or a medium can be compared across labs, organisms and scales.**
 
 **[Interactive explainer →](https://anupama29k.github.io/Bioprocess-Atlas/)** (architecture diagram you can drag around, one comparison followed through the pipeline, effects explorer). The source is `docs/index.html`.
@@ -123,6 +125,7 @@ Created and maintained by **Anupama Kozhiyalam** ([@anupama29k](https://github.c
 
 
 - **Code:** MIT, © 2026 Anupama Kozhiyalam (see `LICENSE`).
+- **Citing the atlas:** Kozhiyalam, A. *Bioprocess Atlas: comparable perturbation effects from published bioreactor runs.* Zenodo. [doi:10.5281/zenodo.24125547](https://doi.org/10.5281/zenodo.24125547) — this DOI always resolves to the newest release; each release also has its own.
 - **Data:** each dataset keeps its original license (all CC BY 4.0 so far). If you use the release, cite the original studies listed above and this repository (see `CITATION.cff`).
 
 The growth-rate engine in `atlas/engine.py` is vendored from Bioprocess Analyzer at commit 2439bf9.

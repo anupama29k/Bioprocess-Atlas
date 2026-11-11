@@ -5,6 +5,7 @@ version: "0.4.0"
 date-released: "2026-11-10"
 license: MIT
 repository-code: "https://github.com/anupama29k/Bioprocess-Atlas"
+doi: "10.5281/zenodo.24125547"
 authors:
   - given-names: "Anupama"
     family-names: "Kozhiyalam"
