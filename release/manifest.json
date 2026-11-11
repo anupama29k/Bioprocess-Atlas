@@ -15,7 +15,7 @@
     "Saccharomyces pastorianus"
   ],
   "perturbations": 31,
-  "observations_sha256_16": "5c8e0518676ae823",
+  "observations_sha256_16": "f9c16ad0ff4e8879",
   "engine": "bioprocessanalyzer@2439bf9",
   "variables": {
     "od600": {

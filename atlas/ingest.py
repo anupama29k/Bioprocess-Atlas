@@ -472,7 +472,7 @@ def schapertoens2026() -> Dataset:
 
     growth = pd.read_csv(D / "01_ViCell_growth_data.csv")
     growth["rep"] = growth.Replicate.str.replace("R", "").astype(int)
-    titer = pd.read_csv(D / "03_ViCell_titer.csv")
+    titer = pd.read_csv(D / "03_ViCell_titer.csv").rename(columns={"Titer_ug.mL": "titer_ug_mL"})
     lact = pd.read_csv(D / "04_lactate.csv")
     lact.columns = [c.strip() for c in lact.columns]
     lact["rep"] = lact.Replicate.str.replace("R", "").astype(int)
@@ -496,16 +496,18 @@ def schapertoens2026() -> Dataset:
                 notes=f"campaign {batch}; letter code {c} in the source files"
                       + ("" if batch == "FB4" else "; no same-campaign standard-feed reference")))
 
-    for row in growth.itertuples():
+    # Cell counts, viability, diameter and titer all come from the strategy-named file,
+    # so they do not depend on the letter -> name mapping at all. (The mapping is verified:
+    # every run's time grid and VCD series is identical between the two files.)
+    BY_NAME = {n: c for c, (n, _) in NAME.items()}
+    for row in titer.itertuples():
+        run = rid(BY_NAME[row.Condition], row.Replicate)
         for col, var, k in (("Total_VCD", "vcd_cells_mL", 1e6), ("Viability", "viability_percent", 1),
-                            ("Average_diameter", "cell_diameter_um", 1)):
+                            ("Average_diameter", "cell_diameter_um", 1),
+                            ("titer_ug_mL", "product_gL", 1e-3)):
             v = getattr(row, col)
             if pd.notna(v):
-                ds.observations.append((rid(row.Condition, row.rep), float(row.Hours), var, float(v) * k))
-    for row in titer.dropna(subset=["Titer_ug.mL"]).itertuples():
-        c = next(k for k, (n, _) in NAME.items() if n == row.Condition)
-        ds.observations.append((rid(c, row.Replicate), float(row.Hours), "product_gL",
-                                float(getattr(row, "_13")) / 1000.0))
+                ds.observations.append((run, float(row.Hours), var, float(v) * k))
     for row in lact.itertuples():
         ds.observations.append((rid(row.Condition, row.rep), float(row.Hours), "lactate_gL",
                                 float(row.c_mM) * 0.09008))       # lactate, 90.08 g/mol
