@@ -1,5 +1,6 @@
 """Tests for the Bioprocess Atlas build.   python tests/test_atlas.py"""
 import sys
+import numpy as np
 import pandas as pd, tempfile
 from pathlib import Path
 
@@ -132,6 +133,17 @@ with tempfile.TemporaryDirectory() as d:
           bs.loc[("feed for µ = 0.4 vs 0.075 h⁻¹", "glucose_end_gL"), "mean"] > 20
           and bs.loc[("feed for µ = 0.3 vs 0.075 h⁻¹", "glucose_end_gL"), "mean"] < 5,
           f"{bs.loc[('feed for µ = 0.4 vs 0.075 h⁻¹', 'glucose_end_gL'), 'mean']:.0f} g/L at µ = 0.4")
+    bs_runs = runs[runs.dataset_id == "hiller2024"].run_id
+    cdw_dep = []
+    for rid_ in bs_runs:
+        s = obs[obs.run_id == rid_]
+        g_ = s[s.variable == "glucose_gL"].sort_values("time_h")
+        x_ = s[s.variable == "biomass_gL"].sort_values("time_h")
+        d_ = g_[g_.value < 0.1]
+        if len(d_) and len(x_):
+            cdw_dep.append(np.interp(d_.time_h.iloc[0], x_.time_h, x_.value))
+    check("B. subtilis: biomass at glucose exhaustion matches the paper's 7.22 +/- 0.82 g/L",
+          6.0 < np.mean(cdw_dep) < 8.5, f"{np.mean(cdw_dep):.2f} +/- {np.std(cdw_dep, ddof=1):.2f} g/L")
     check("B. subtilis: batch-phase growth rate does not track the feed setpoint (negative control)",
           abs(bs.xs("mu_batch_h", level=1)["pct_change"]).median() < 10,
           f"median |change| {abs(bs.xs('mu_batch_h', level=1)['pct_change']).median():.1f} %")

@@ -86,7 +86,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 ```bash
 pip install -r requirements.txt
 python -m atlas.build          # rebuilds release/ from data/raw/
-python tests/test_atlas.py     # 34 checks, including known biology
+python tests/test_atlas.py     # 35 checks, including known biology
 ```
 
 ```python
