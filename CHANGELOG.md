@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.0 — 2026-11-10
+
+9 measured datasets · 172 runs · 7 organisms · 48 one-factor comparisons · 222,437 observations
+
+**New dataset**
+
+- `calzadilla2023` — one 2 L HEK293 chemostat producing the Her1 extracellular domain, held at five dilution-rate set points over 85 days. CC BY 4.0. The atlas's first continuous cultivation, and its first human cell line.
+
+**Schema 0.5**
+
+- New variable: dilution rate.
+- Phenotypes that assume a batch or fed-batch accumulation (specific growth rate, substrate depletion time, biomass yield, byproduct peak and reconsumption, integral viable cell density, cell-specific productivity) are no longer computed for continuous runs, where they are meaningless.
+- The chemostat is a single vessel, so its five steady-state periods are stored as one run with the dilution rate as a time series, and no comparison is asserted between them.
+
+32 tests.
+
 ## v0.4.0 — 2026-11-10
 
 8 measured datasets · 171 runs · 6 organisms · 48 one-factor comparisons · 222,062 observations

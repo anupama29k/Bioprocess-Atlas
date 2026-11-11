@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 
-SCHEMA_VERSION = "0.4"
+SCHEMA_VERSION = "0.5"
 
 # Controlled vocabulary: variable name → (unit, description). Names carry the unit.
 VARIABLES = {
@@ -54,6 +54,7 @@ VARIABLES = {
     "galactosylation_index": ("galactoses/glycan", "mean galactose residues per N-glycan on the product (0–2)"),
     "afucosylation_percent": ("%", "N-glycans on the product lacking core fucose"),
     "g0f_percent":     ("%", "share of the product carrying G0F on both heavy chains"),
+    "dilution_rate_h": ("1/h", "dilution rate of a continuous culture (feed rate ÷ working volume)"),
     "product_activity_AU_mL": ("AU/mL", "target enzyme activity in broth (assay-specific units; compare within a product only)"),
 }
 

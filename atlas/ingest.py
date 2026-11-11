@@ -536,3 +536,50 @@ def schapertoens2026() -> Dataset:
 
 
 INGESTERS["schapertoens2026"] = schapertoens2026
+
+
+def calzadilla2023() -> Dataset:
+    """One 2 L HEK293 chemostat held at five dilution-rate set points in sequence."""
+    import openpyxl
+
+    D = ROOT / "calzadilla2023_hek293_chemostat"
+    ws = openpyxl.load_workbook(D / "Continuous_culture_data_Multiplicity_HEK293.xlsx",
+                                data_only=True)["Sheet1"]
+    rows = [list(r) for r in ws.iter_rows(values_only=True)]
+    ds = Dataset(
+        dataset_id="calzadilla2023",
+        title="HEK293 producing the Her1 extracellular domain: one 2 L chemostat through five dilution-rate set points",
+        citation="Calzadilla N, Boggiano T, Vazquez E, Mulet A (2023) Data in Brief 50:109604",
+        doi="10.17632/t9rcjv5362.4", license="CC BY 4.0", measured=True)
+    rid = "calzadilla2023:chemostat"
+    ds.runs.append(Run(
+        run_id=rid, dataset_id=ds.dataset_id, organism="Homo sapiens (HEK293)",
+        strain="HEK293 secreting the Her1 extracellular domain", mode="Continuous",
+        vessel="2 L stirred-tank bioreactor", working_volume_L=2.0,
+        medium="chemically defined, 24 mmol/L glucose and 5.5 mmol/L glutamine in the feed",
+        temperature_C=None, pH_setpoint=None, replicate=1, campaign="calzadilla2023",
+        # A single vessel: the five steady states are sequential periods of one run, not
+        # independent reactors, so no comparison is asserted between them.
+        reference_condition="chemostat", condition="chemostat",
+        perturbation_type="none", is_reference=True, source_doi=ds.doi, license=ds.license,
+        notes="single vessel; dilution rate set to 0.45, 0.40, 0.35, 0.40 then 0.45 1/d "
+              "(steady states SS1-SS5), recorded as the dilution_rate_h time series; "
+              "the study reports different steady states at the same dilution rate"))
+    # column index -> (variable, factor to the atlas unit)
+    COLS = {4: ("vcd_cells_mL", 1.0), 12: ("dilution_rate_h", 1.0),
+            13: ("product_gL", 1e-3),                 # µg/mL -> g/L
+            26: ("glucose_gL", 0.18016),              # mmol/L -> g/L
+            30: ("lactate_gL", 0.09008),
+            34: ("glutamine_gL", 0.14615)}
+    for r in rows[4:]:
+        if len(r) < 35 or not isinstance(r[3], (int, float)):
+            continue
+        t_h = float(r[3])
+        for j, (var, k) in COLS.items():
+            v = r[j]
+            if isinstance(v, (int, float)):
+                ds.observations.append((rid, t_h, var, float(v) * k))
+    return ds
+
+
+INGESTERS["calzadilla2023"] = calzadilla2023

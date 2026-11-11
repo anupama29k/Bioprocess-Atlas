@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use the Bioprocess Atlas, please cite it and the original studies of each dataset you use."
 title: "Bioprocess Atlas"
-version: "0.4.0"
+version: "0.5.0"
 date-released: "2026-11-10"
 license: MIT
 repository-code: "https://github.com/anupama29k/Bioprocess-Atlas"

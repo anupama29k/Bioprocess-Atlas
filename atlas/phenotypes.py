@@ -50,9 +50,23 @@ PHENOTYPES = {
 }
 
 
+def _drop_batch_only(run, out):
+    if run.get("mode") == "Continuous":
+        for k in BATCH_ONLY:
+            out.pop(k, None)
+    return out
+
+
 def _series(obs, var):
     s = obs[obs.variable == var].sort_values("time_h")
     return s.time_h.to_numpy(float), s.value.to_numpy(float)
+
+
+# Phenotypes that assume a batch or fed-batch accumulation and are meaningless in a
+# continuous culture, where growth rate is set by the dilution rate and product washes out.
+BATCH_ONLY = ("mu_batch_h", "mu_batch_se_h", "glucose_depletion_h", "Yxs_batch_gg",
+              "acetate_peak_gL", "acetate_reconsumed_frac", "mu_fedbatch_h",
+              "ivcd_1e9_cells_h_L", "qp_pg_cell_day")
 
 
 def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
@@ -121,7 +135,7 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
     if len(td):
         out["DO_min_pct"] = float(np.clip(do, 0, None).min())
     if len(tx) < 3:
-        return out
+        return _drop_batch_only(run, out)
 
     # batch end = glucose depletion, else the whole run is batch-like
     t_dep = None
@@ -177,7 +191,7 @@ def run_phenotypes(run: dict, obs: pd.DataFrame) -> dict:
             out["mu_fedbatch_h"] = float(linregress(tx[fb], np.log(x[fb])).slope)
     if len(_series(obs, "biomass_gL")[0]) or len(_series(obs, "od600")[0]):
         out["biomass_final_gL"] = float(x[-1])
-    return out
+    return _drop_batch_only(run, out)
 
 
 def _compare(a, b):

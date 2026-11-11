@@ -4,13 +4,13 @@
 
 ¹ [affiliation to fill in] · ORCID [to fill in] · correspondence: [email to fill in]
 
-*Draft data descriptor, prepared for submission to* Scientific Data *(or* Data in Brief*). Numbers refer to release v0.4.0, doi:10.5281/zenodo.24125548. Every figure in the text is generated from that release and should be regenerated before submission if the release changes.*
+*Draft data descriptor, prepared for submission to* Scientific Data *(or* Data in Brief*). Numbers refer to release v0.5.0 (v0.4.0 is archived at doi:10.5281/zenodo.24125548). Every figure in the text is generated from that release and should be regenerated before submission if the release changes.*
 
 ---
 
 ## Abstract
 
-Upstream bioprocess development still begins, for most new strains and products, from a blank sheet. The experiments that would inform it have been run many times, in many laboratories, but their results remain locked in figures and in formats that cannot be compared across studies, and the largest openly available benchmark for the field is simulated rather than measured. Here we describe the Bioprocess Atlas, an open collection of measured bioreactor cultivations drawn from published studies in which a single factor was varied against a reference condition. Release v0.4.0 holds 8 datasets, 171 bioreactor runs and 222,062 measurements spanning six organisms, from microbial fermentations to mammalian cell culture, and including both product titer and N-glycan product-quality attributes. Every run is reduced to the same set of phenotypes by a single versioned analysis engine, and every perturbation is reported against its own reference with replicate statistics. All tables are rebuilt from the unchanged published source files by one command, and each release carries a checksum and the engine version. The atlas is intended as a reference set for process development, for benchmarking, and as training data for predictive models of bioreactor behaviour.
+Upstream bioprocess development still begins, for most new strains and products, from a blank sheet. The experiments that would inform it have been run many times, in many laboratories, but their results remain locked in figures and in formats that cannot be compared across studies, and the largest openly available benchmark for the field is simulated rather than measured. Here we describe the Bioprocess Atlas, an open collection of measured bioreactor cultivations drawn from published studies in which a single factor was varied against a reference condition. Release v0.5.0 holds 9 datasets, 172 bioreactor runs and 222,437 measurements spanning seven organisms, from microbial fermentations to mammalian cell culture, in batch, fed-batch and continuous mode, and including both product titer and N-glycan product-quality attributes. Every run is reduced to the same set of phenotypes by a single versioned analysis engine, and every perturbation is reported against its own reference with replicate statistics. All tables are rebuilt from the unchanged published source files by one command, and each release carries a checksum and the engine version. The atlas is intended as a reference set for process development, for benchmarking, and as training data for predictive models of bioreactor behaviour.
 
 ---
 
@@ -34,7 +34,7 @@ The design rests on four decisions.
 
 **Rebuild from source, not from intermediates.** The published files are stored unchanged. Every table in a release is regenerated from them by one command, and a checksum over all observations is published with each release.
 
-Release v0.4.0 contains 8 datasets and 171 runs across *Escherichia coli*, *Bacillus subtilis*, *Saccharomyces cerevisiae*, *Saccharomyces pastorianus*, *Komagataella phaffii* and Chinese hamster ovary (CHO) cells; 72 batch and 99 fed-batch cultivations; working volumes from 15 mL to 12 L; and 48 one-factor comparisons, of which 211 phenotype-level effects carry replicate statistics and 77 reach p < 0.05. The perturbations include gene deletions, strain background, temperature, pH, dissolved oxygen, medium composition, inoculum age, aeration, agitation, impeller geometry, vessel scale and six graded feed rates.
+Release v0.5.0 contains 9 datasets and 172 runs across *Escherichia coli*, *Bacillus subtilis*, *Saccharomyces cerevisiae*, *Saccharomyces pastorianus*, *Komagataella phaffii*, Chinese hamster ovary (CHO) and HEK293 cells; 72 batch, 99 fed-batch and one continuous cultivation; working volumes from 15 mL to 12 L; and 48 one-factor comparisons, of which 211 phenotype-level effects carry replicate statistics and 77 reach p < 0.05. The perturbations include gene deletions, strain background, temperature, pH, dissolved oxygen, medium composition, inoculum age, aeration, agitation, impeller geometry, vessel scale and six graded feed rates.
 
 ---
 
@@ -56,7 +56,7 @@ One ingester function per dataset converts its files into runs, observations and
 
 Four tables are keyed by `run_id`. A **run** is one vessel: it records organism, strain, mode, vessel, working volume, medium, temperature and pH set points, replicate number, campaign, condition, reference condition, perturbation type, perturbation and dose. An **observation** is a single measurement: run, time in hours, variable, value. A **phenotype** is a derived quantity for one run. An **effect** is one perturbation against its reference for one phenotype.
 
-Units are carried by the variable name — `glucose_gL`, `DO_percent`, `vcd_cells_mL` — rather than in a separate column, so values are directly comparable across datasets without unit reconciliation at analysis time. The build rejects any variable outside the vocabulary, which prevents silent divergence as datasets accumulate. Release v0.4.0 defines 33 variables, of which 32 are populated, from standard process measurements (biomass, substrates, byproducts, dissolved oxygen, pH, off-gas) through inline sensor channels (permittivity, dissolved carbon dioxide, turbidity) to product measurements (titer, enzyme activity) and product-quality attributes (galactosylation index, afucosylation, G0F share).
+Units are carried by the variable name — `glucose_gL`, `DO_percent`, `vcd_cells_mL` — rather than in a separate column, so values are directly comparable across datasets without unit reconciliation at analysis time. The build rejects any variable outside the vocabulary, which prevents silent divergence as datasets accumulate. Release v0.5.0 defines 34 variables, of which 33 are populated, from standard process measurements (biomass, substrates, byproducts, dissolved oxygen, pH, off-gas) through inline sensor channels (permittivity, dissolved carbon dioxide, turbidity) to product measurements (titer, enzyme activity) and product-quality attributes (galactosylation index, afucosylation, G0F share).
 
 ### Phenotypes
 
@@ -104,13 +104,14 @@ The release is archived at Zenodo (doi:10.5281/zenodo.24125547, which always res
 | `uhlendorff2026_cho` | CHO-K1 | batch and fed-batch with inline turbidity, permittivity, dissolved oxygen and CO₂: agitation and aeration, seeding density, glutamine, medium, impeller position, feeding | 24 | Zenodo 10.5281/zenodo.20829178 | CC BY 4.0 |
 | `salesvallverdu2024` | *K. phaffii* | glucose-limited fed-batch, oxygen limitation against matched normoxia at four growth rates and for three secreted lipases | 11 | Microb Biotechnol 17:e14411 | CC BY 4.0 |
 | `hiller2024` | *B. subtilis* BMV9 | surfactin production in a 30 L vessel: six growth-rate-controlling feed rates in duplicate, plus a batch process | 13 | Microb Cell Fact 23:260 | CC BY 4.0 |
+| `calzadilla2023` | HEK293 | one 2 L chemostat held at five dilution-rate set points over 85 days; single vessel, so no comparison is asserted | 1 | Data in Brief 50:109604 | CC BY 4.0 |
 | `schapertoens2026` | NISTCHO | seven feeding strategies (frequency, glucose level, galactose) with titer and N-glycan quality attributes | 25 | npj Syst Biol Appl 12:67 | CC BY 4.0 |
 
 ---
 
 ## Technical Validation
 
-The atlas is validated by requiring that it reproduce, from the raw files and through the common pipeline, the principal finding that each source study reported independently. Thirty-one automated checks run on every build; the build fails if any does not pass.
+The atlas is validated by requiring that it reproduce, from the raw files and through the common pipeline, the principal finding that each source study reported independently. Thirty-two automated checks run on every build; the build fails if any does not pass.
 
 | Source study | Finding reported by the authors | Recovered by the atlas |
 |---|---|---|
@@ -149,7 +150,7 @@ Several conventions should be observed when using the data.
 
 **Read the dataset README before relying on a dataset.** Each records the caveats found during ingestion, including unresolved ambiguities in the source files.
 
-The principal limitation of v0.4.0 is size and coverage. Eight datasets cannot characterise the space of bioprocess perturbations, and the distribution reflects what is openly available rather than what is industrially important: product-quality attributes appear in one dataset, scale is varied in one, and several industrially central hosts are absent. A systematic search for datasets in which one process is measured at two or more scales found essentially nothing in the public domain, which is itself a finding: the comparability question on which scale-up depends cannot presently be studied with open data.
+The principal limitation of v0.5.0 is size and coverage. Nine datasets cannot characterise the space of bioprocess perturbations, and the distribution reflects what is openly available rather than what is industrially important: product-quality attributes appear in one dataset, scale is varied in one, and several industrially central hosts are absent. A systematic search for datasets in which one process is measured at two or more scales found essentially nothing in the public domain, which is itself a finding: the comparability question on which scale-up depends cannot presently be studied with open data.
 
 The atlas is designed to grow by contribution. Adding a dataset requires its unchanged files, a README, and one ingester function; the build rejects variables outside the vocabulary, so the schema cannot drift silently as datasets accumulate.
 

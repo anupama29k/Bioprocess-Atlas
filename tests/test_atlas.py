@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from atlas.build import build          # noqa: E402
 from atlas.schema import VARIABLES     # noqa: E402
+from atlas.phenotypes import BATCH_ONLY  # noqa: E402
 
 res = []
 def check(name, cond, detail=""):
@@ -98,6 +99,12 @@ with tempfile.TemporaryDirectory() as d:
     check("the NISTCHO campaign without a standard-feed arm (FB2) produces no effect rows",
           eff[eff.campaign == "schapertoens2026 · FB2"].empty
           and runs[runs.campaign == "schapertoens2026 · FB2"].run_id.nunique() == 9)
+    cont = runs[runs["mode"] == "Continuous"].run_id
+    cp = ph[ph.run_id.isin(cont)]
+    check("continuous runs carry no batch-phase phenotypes and no asserted comparisons",
+          len(cont) >= 1 and cp[list(BATCH_ONLY)].isna().all().all()
+          and eff[eff.campaign == "calzadilla2023"].empty,
+          f"{len(cont)} continuous run(s)")
     check("feed-dependent phenotypes are flagged, except where the feed is itself the perturbation",
           fb[fb.perturbation_type != "feed"].confounded_by_feed.all()
           and not fb[fb.perturbation_type == "feed"].confounded_by_feed.any())

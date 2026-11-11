@@ -1,20 +1,21 @@
 {
-  "schema_version": "0.4",
-  "datasets": 8,
-  "runs": 171,
-  "observations": 222062,
-  "conditions": 73,
+  "schema_version": "0.5",
+  "datasets": 9,
+  "runs": 172,
+  "observations": 222437,
+  "conditions": 74,
   "contrasts": 30,
   "organisms": [
     "Bacillus subtilis",
     "Cricetulus griseus (CHO)",
     "Escherichia coli",
+    "Homo sapiens (HEK293)",
     "Komagataella phaffii",
     "Saccharomyces cerevisiae",
     "Saccharomyces pastorianus"
   ],
   "perturbations": 31,
-  "observations_sha256_16": "5f0b6e868e796e3a",
+  "observations_sha256_16": "5c8e0518676ae823",
   "engine": "bioprocessanalyzer@2439bf9",
   "variables": {
     "od600": {
@@ -144,6 +145,10 @@
     "g0f_percent": {
       "unit": "%",
       "description": "share of the product carrying G0F on both heavy chains"
+    },
+    "dilution_rate_h": {
+      "unit": "1/h",
+      "description": "dilution rate of a continuous culture (feed rate ÷ working volume)"
     },
     "product_activity_AU_mL": {
       "unit": "AU/mL",

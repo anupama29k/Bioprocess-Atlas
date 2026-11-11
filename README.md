@@ -8,7 +8,7 @@
 
 | release | datasets | bioreactor runs | organisms | one-factor comparisons | observations |
 |---|---|---|---|---|---|
-| v0.4 | 8 | 171 | 6 (*E. coli*, *B. subtilis*, two brewing yeasts, *K. phaffii*, CHO) | 48 | 222,062 |
+| v0.5 | 9 | 172 | 7 (*E. coli*, *B. subtilis*, two brewing yeasts, *K. phaffii*, CHO, HEK293) | 48 | 222,437 |
 
 ## Why
 
@@ -61,6 +61,7 @@ Phenotypes are taken only from phases in which both arms had the same conditions
 | `uhlendorff2026` | Brewing yeast propagation: 2 strains × temperature, aeration, wort gravity, pre-culture, scale | 52 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.19690248](https://doi.org/10.5281/zenodo.19690248) | CC BY 4.0 |
 | `schellenberg2021` | CHO DG44 IgG producer, 12-day fed-batch: glutamate, glucose overfeeding, reduced feed, pH and CO2 stress vs standard process (ambr15 and shake flask) | 21 | Solle D, Schellenberg J (2021) LUH. [doi:10.25835/0066265](https://doi.org/10.25835/0066265); paper [doi:10.1002/elsc.202100062](https://doi.org/10.1002/elsc.202100062) | CC0 1.0 |
 | `salesvallverdu2024` | *K. phaffii* (*Pichia*) glucose-limited fed-batch: hypoxia vs normoxia at four growth rates and for three secreted lipases | 11 | Sales-Vallverdú A et al. (2024) Microb Biotechnol 17:e14411; data [doi:10.34810/data1118](https://doi.org/10.34810/data1118) | CC BY 4.0 |
+| `calzadilla2023` | HEK293 secreting the Her1 extracellular domain: one 2 L chemostat held at five dilution-rate set points over 85 days (continuous mode; no comparison asserted, single vessel) | 1 | Calzadilla N et al. (2023) Data in Brief 50:109604. [doi:10.17632/t9rcjv5362.4](https://doi.org/10.17632/t9rcjv5362.4) | CC BY 4.0 |
 | `schapertoens2026` | NISTCHO fed-batch under seven feeding strategies (feed frequency, glucose level, galactose), with titer **and N-glycan product quality** | 25 | Schäpertöns V et al. (2026) npj Syst Biol Appl 12:67. [doi:10.5281/zenodo.18609042](https://doi.org/10.5281/zenodo.18609042) | CC BY 4.0 |
 | `hiller2024` | *B. subtilis* BMV9 surfactin in 30 L fed-batch: six growth-rate-controlling feed rates (0.075–0.4 h⁻¹) in duplicate, plus a batch process | 13 | Hiller E et al. (2024) Microb Cell Fact 23:260. [doi:10.1186/s12934-024-02531-w](https://doi.org/10.1186/s12934-024-02531-w) | CC BY 4.0 |
 | `uhlendorff2026_cho` | CHO-K1 batch and fed-batch with inline turbidity, permittivity, DO and CO2: agitation/aeration, seeding, glutamine, medium, impeller position, feeding | 24 | Uhlendorff S et al. (2026) Zenodo. [doi:10.5281/zenodo.20829178](https://doi.org/10.5281/zenodo.20829178) | CC BY 4.0 |
@@ -84,7 +85,7 @@ Each `data/raw/<dataset>/README.md` lists the conditions and the known caveats.
 ```bash
 pip install -r requirements.txt
 python -m atlas.build          # rebuilds release/ from data/raw/
-python tests/test_atlas.py     # 31 checks, including known biology
+python tests/test_atlas.py     # 32 checks, including known biology
 ```
 
 ```python
@@ -103,7 +104,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). In short: unchanged files plus a README 
 
 | phase | goal | gate |
 |---|---|---|
-| 0 · Seed (now) | schema, build, tests, 8 measured datasets incl. CHO with product quality, *Pichia* and a 30 L dose series | engine reproduces published values |
+| 0 · Seed (now) | schema, build, tests, 9 measured datasets spanning batch, fed-batch and continuous, incl. CHO with product quality | engine reproduces published values |
 | 1 · Aggregate | 20–50 open datasets, 6+ organisms, field names mapped to the PREFER ontology | 200+ runs |
 | 2 · Generate | designed campaign on 24–48 parallel mini-bioreactors, with the parent strain in every plate column | batch effect smaller than the biological effects |
 | 3 · Scale and model | partner labs, graded process doses, a virtual bioreactor tested on held-out perturbations | |
