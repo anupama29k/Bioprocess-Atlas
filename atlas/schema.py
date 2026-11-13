@@ -50,7 +50,11 @@ VARIABLES = {
     "osmolality_mOsm_kg": ("mOsm/kg", "osmolality"),
     "cell_diameter_um": ("µm", "mean diameter of viable cells"),
     "arabitol_gL":     ("g/L", "arabitol in broth"),
-    "ammonium_gL":     ("g/L", "ammonium in broth (mass basis, as reported)"),
+    # Two ammonium variables on purpose. Sources report either mM or g/L, and a g/L figure
+    # can be on an NH4+, an elemental-N or a salt basis, which differ by up to 4x. No source
+    # in the atlas states its basis, so neither series is converted into the other and no run
+    # carries both; a test enforces that. Convert only if you know your source's basis.
+    "ammonium_gL":     ("g/L", "ammonium in broth, mass basis exactly as reported (basis unstated)"),
     "galactosylation_percent": ("%", "galactosylation index: galactose residues as a share of possible galactosylation sites on the product N-glycans (Schäpertöns et al. 2026, Eq. 7)"),
     "afucosylation_percent": ("%", "N-glycans on the product lacking core fucose"),
     "g0f_percent":     ("%", "share of the product carrying G0F on both heavy chains"),

@@ -148,6 +148,13 @@ with tempfile.TemporaryDirectory() as d:
           abs(bs.xs("mu_batch_h", level=1)["pct_change"]).median() < 10,
           f"median |change| {abs(bs.xs('mu_batch_h', level=1)['pct_change']).median():.1f} %")
 
+    # A g/L ammonium figure can be on an NH4+, elemental-N or salt basis, which differ by up
+    # to 4x, and no source states which. Keeping the two series apart is what stops a silent
+    # unit error; merging them would need a basis the literature does not supply.
+    amm = obs[obs.variable.str.startswith("ammonium")]
+    check("ammonium is never reported in two units for the same run (basis is unstated)",
+          (amm.groupby("run_id").variable.nunique() <= 1).all(),
+          f"{amm.variable.nunique()} units across {amm.run_id.nunique()} runs, never mixed")
     check("every run records what its replicate number means",
           runs.replicate_scope.isin(["parallel_vessels", "independent", "single", "unknown"]).all()
           and (runs.groupby("condition").replicate_scope.nunique() == 1).all(),

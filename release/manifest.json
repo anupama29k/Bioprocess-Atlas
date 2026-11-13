@@ -132,7 +132,7 @@
     },
     "ammonium_gL": {
       "unit": "g/L",
-      "description": "ammonium in broth (mass basis, as reported)"
+      "description": "ammonium in broth, mass basis exactly as reported (basis unstated)"
     },
     "galactosylation_percent": {
       "unit": "%",
