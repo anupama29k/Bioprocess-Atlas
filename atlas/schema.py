@@ -74,14 +74,20 @@ class Run:
     medium: str
     temperature_C: float | None
     pH_setpoint: float | None
-    replicate: int               # biological replicate number within its condition
+    replicate: int               # replicate number within its condition; see replicate_scope
     campaign: str                # runs that share a reference and a run date/platform
     reference_condition: str     # condition id this run is compared against
-    condition: str               # condition id (shared by biological replicates)
+    condition: str               # condition id (shared by the condition's replicates)
     perturbation_type: str = "none"
     perturbation: str = ""       # e.g. "ΔaceA", "pH 6.5", "feed ×1.5"
     perturbation_dose: float | None = None   # continuous strength, when meaningful
     is_reference: bool = False
+    # What a replicate number actually means for this run. "parallel_vessels": vessels run
+    # side by side in one system, normally from a shared seed culture, so they share any
+    # inoculum or run-day effect and are not independent. "independent": separate cultures.
+    # "single": one vessel. "unknown": the source does not say. This matters because the
+    # atlas's p-values treat replicates as independent, which is optimistic for the first case.
+    replicate_scope: str = "unknown"
     dcw_per_od: float | None = None
     source_doi: str = ""
     license: str = ""

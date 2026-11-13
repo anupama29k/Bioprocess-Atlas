@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .ingest import INGESTERS
+from .ingest import INGESTERS, _tag_replicate_scope
 from .phenotypes import ENGINE_SOURCE, PHENOTYPES, effects, run_phenotypes
 from .schema import SCHEMA_VERSION, VARIABLES
 
@@ -25,7 +25,7 @@ OUT = Path(__file__).parent.parent / "release"
 def build(datasets=None, out: Path = OUT) -> dict:
     runs, obs, meta, contrasts = [], [], [], []
     for name in datasets or INGESTERS:
-        ds = INGESTERS[name]()
+        ds = _tag_replicate_scope(INGESTERS[name]())
         unknown = {o[2] for o in ds.observations} - set(VARIABLES)
         if unknown:
             raise ValueError(f"{name}: variables outside the vocabulary: {sorted(unknown)}")

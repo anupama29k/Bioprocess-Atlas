@@ -76,6 +76,38 @@ def hans2020() -> Dataset:
     return ds
 
 
+
+# What a replicate number means, per dataset, taken from each source's own description of its
+# hardware (see the dataset READMEs). Almost every multi-vessel study in the atlas runs its
+# replicates side by side in one parallel system, so they share the seed culture and the run
+# day: the atlas's p-values treat them as independent, which is optimistic. Recorded here
+# rather than inferred, so that a dataset whose source says nothing stays "unknown".
+REPLICATE_SCOPE = {
+    # 2mag bioREACTOR 48, 24 vessels run together on one liquid handler.
+    "hans2020": "parallel_vessels",
+    # ambr15 microbioreactor system; the shake-flask series is 3 flasks from one inoculum.
+    "schellenberg2021": "parallel_vessels",
+    # DASGIP parallel system, 2 reactors per experiment.
+    "uhlendorff2026_cho": "parallel_vessels",
+    # 50 mL TubeSpin tubes, 3-4 per strategy within one campaign.
+    "schapertoens2026": "parallel_vessels",
+    # 2 x 30 L stirred tanks per feed rate. The paper does not say whether the pair ran
+    # together or on different days, so this one is left unknown rather than guessed.
+    "hiller2024": "unknown",
+}
+
+
+def _tag_replicate_scope(ds: Dataset) -> Dataset:
+    """Fill replicate_scope for runs that an ingester left at the default."""
+    for r in ds.runs:
+        if r.replicate_scope != "unknown":
+            continue                                  # the ingester set it per run
+        if sum(1 for x in ds.runs if x.condition == r.condition) == 1:
+            r.replicate_scope = "single"
+        else:
+            r.replicate_scope = REPLICATE_SCOPE.get(ds.dataset_id, "unknown")
+    return ds
+
 INGESTERS = {"simensen2022": simensen2022, "hans2020": hans2020}
 
 
@@ -109,6 +141,8 @@ def uhlendorff2026() -> Dataset:
             working_volume_L=float(c.scale_L), medium=f"brewer's wort, {c.wort_plato:g} °P",
             temperature_C=float(c.temperature_C), pH_setpoint=None,
             replicate=int(c.reactor[1:]), campaign=c.experiment,
+            # the 0.7 L runs are four vessels side by side; the 10 L runs are one vessel each
+            replicate_scope="parallel_vessels" if float(c.scale_L) < 5 else "single",
             # comparisons for this dataset are the explicit one-factor contrasts below
             reference_condition=c.condition, condition=c.condition,
             perturbation_type="none" if is_ref else "temperature", perturbation=pert,

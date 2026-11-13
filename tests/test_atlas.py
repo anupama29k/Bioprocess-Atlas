@@ -148,4 +148,44 @@ with tempfile.TemporaryDirectory() as d:
           abs(bs.xs("mu_batch_h", level=1)["pct_change"]).median() < 10,
           f"median |change| {abs(bs.xs('mu_batch_h', level=1)['pct_change']).median():.1f} %")
 
+    check("every run records what its replicate number means",
+          runs.replicate_scope.isin(["parallel_vessels", "independent", "single", "unknown"]).all()
+          and (runs.groupby("condition").replicate_scope.nunique() == 1).all(),
+          runs.replicate_scope.value_counts().to_dict())
+    scope = dict(zip(runs.condition, runs.replicate_scope))
+    par = eff[eff.q_bh < 0.05].condition.map(scope).value_counts()
+    check("no surviving effect rests on replication the sources call independent",
+          "independent" not in par.index,
+          f"{par.get('parallel_vessels', 0)} of {par.sum()} rest on parallel vessels, "
+          f"{par.get('unknown', 0)} on replicates of unstated kind")
+    # K. phaffii. The source table puts hypoxia on the left for the Crl1 blocks and on the
+    # right for proROL and CalB, so the ingester reads the block labels rather than their
+    # position. Oxygen supply is what decides fermentative overflow, so ethanol is the test:
+    # if a block were ever taken by position, a normoxic run would carry ethanol.
+    kp = runs[runs.dataset_id == "salesvallverdu2024"]
+    etoh = {}
+    for rid_ in kp.run_id:
+        s = obs[(obs.run_id == rid_) & (obs.variable == "ethanol_gL")]
+        etoh[rid_] = s.value.max() if len(s) else np.nan
+    norm = [v for k, v in etoh.items() if "normoxia" in k]
+    hyp = [v for k, v in etoh.items() if "hypoxia" in k]
+    check("K. phaffii: no normoxic run carries ethanol, every hypoxic run does (block orientation)",
+          all(v == 0 or np.isnan(v) for v in norm) and all(v > 5 for v in hyp),
+          f"normoxia max {np.nanmax(norm):.2f} g/L, hypoxia min {min(hyp):.1f} g/L")
+    kpe = eff[eff.campaign == "K. phaffii · hypoxia"]
+    act = kpe[kpe.phenotype == "activity_final_AU_mL"]
+    check("K. phaffii: hypoxia raises final activity in every matched pair (paper's finding)",
+          len(act) == 5 and (act["pct_change"] > 0).all(),
+          f"{len(act)} pairs, {act['pct_change'].min():.0f} to {act['pct_change'].max():.0f} %")
+    # The deposited table mixes scientific notation into otherwise decimal columns. Dropping
+    # an exponent turns 0.058 g/L of arabitol into 5.85 g/L, which reads as a real measurement.
+    # Arabitol only accumulates under oxygen limitation, so monotonicity is the tell.
+    bad = []
+    for rid_ in kp.run_id[kp.run_id.str.contains("hypoxia")]:
+        a = obs[(obs.run_id == rid_) & (obs.variable == "arabitol_gL")].sort_values("time_h").value.to_numpy()
+        if len(a) and (np.diff(a) < -1e-9).any():
+            bad.append(rid_.split(":")[1])
+    check("K. phaffii: arabitol rises monotonically in every hypoxic run (exponents parsed)",
+          not bad, f"non-monotone: {bad}" if bad else "4 hypoxic runs accumulate, 2 stay at zero")
+
 print(f"\n{sum(res)}/{len(res)} passed"); sys.exit(0 if all(res) else 1)
