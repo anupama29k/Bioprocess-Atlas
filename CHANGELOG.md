@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.0 — 2026-11-10
+## v0.5.0 — 2026-11-13
 
 9 measured datasets · 172 runs · 7 organisms · 48 one-factor comparisons · 222,437 observations
 
@@ -14,7 +14,24 @@
 - Phenotypes that assume a batch or fed-batch accumulation (specific growth rate, substrate depletion time, biomass yield, byproduct peak and reconsumption, integral viable cell density, cell-specific productivity) are no longer computed for continuous runs, where they are meaningless.
 - The chemostat is a single vessel, so its five steady-state periods are stored as one run with the dilution rate as a time series, and no comparison is asserted between them.
 
-32 tests.
+**Statistics, after a verification pass against the source papers**
+
+- **FDR-corrected q-values.** `effects.csv` gains `q_bh`, a Benjamini-Hochberg false-discovery rate computed within each campaign. Of 211 tests, 78 reach p < 0.05 but only 51 survive at q < 0.05, and about 11 of the 78 are expected by chance. Two effects previously quoted on p alone do not survive and are now stated as effect sizes: ΔaceA acetate reconsumption (d = −5.6, q = 0.20) and W-68 peak VCD at 37 °C (d = −20.5, q = 0.062).
+- **`replicate_scope` on every run**, recording what its replicate number means, taken from each source's own description of its hardware. 44 of the 51 surviving effects rest on vessels run side by side in one parallel system, 7 on replicates of unstated kind, and none on replication a source calls independent. The Welch test treats replicates as independent, so its p-values are anticonservative.
+
+**Corrections**
+
+- **Galactosylation is now the source study's own metric.** `galactosylation_index` (galactoses per glycan) is replaced by `galactosylation_percent`, implemented to Schäpertöns et al.'s Eq. 7. The atlas returns 24.3 % for the galactose arms against the paper's reported 24 %. Incomplete glycoform pairs are now weighted rather than dropped.
+- **NISTCHO titer was being silently dropped** after a refactor, because `itertuples` renames a column containing a dot. Cell counts and titer are now read from the named file, which also removed the atlas's dependence on an inferred condition-letter mapping.
+- **B. subtilis volume-balance rows were being parsed as data**, which produced a glucose depletion time of 0.39 h. Row parsing is now bounded at the volume table.
+- `Yxs_batch_gg` is no longer computed from cell counts, where it has no meaning.
+- Ammonium in mM and in g/L are kept as separate variables and never converted, since no source states whether a g/L figure is on an NH4⁺, elemental-N or salt basis.
+
+**External validation**
+
+- Galactosylation 24.3 % vs the paper's 24 %; B. subtilis biomass at glucose exhaustion 6.98 ± 1.04 g/L vs the paper's 7.22 ± 0.82; NISTCHO condition mapping confirmed across all 25 runs. The remaining 7–17 % gap in B. subtilis Y_P/X is explained: the paper fits polynomials and reads parameters off the fits.
+
+41 tests.
 
 ## v0.4.0 — 2026-11-10
 
